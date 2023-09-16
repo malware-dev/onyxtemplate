@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OnyxTemplate", "OnyxTemplate\OnyxTemplate.csproj", "{0AD0E9AB-16E5-45B9-B664-EB31088F4BDE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp1", "ConsoleApp1\ConsoleApp1.csproj", "{C521D940-48A3-4A99-9E81-367B043FE95C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0AD0E9AB-16E5-45B9-B664-EB31088F4BDE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0AD0E9AB-16E5-45B9-B664-EB31088F4BDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0AD0E9AB-16E5-45B9-B664-EB31088F4BDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0AD0E9AB-16E5-45B9-B664-EB31088F4BDE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C521D940-48A3-4A99-9E81-367B043FE95C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C521D940-48A3-4A99-9E81-367B043FE95C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C521D940-48A3-4A99-9E81-367B043FE95C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C521D940-48A3-4A99-9E81-367B043FE95C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
