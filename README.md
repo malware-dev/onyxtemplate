@@ -205,7 +205,7 @@ Animals:
 ```
 ---
 
-### Conditionals
+## Conditionals
 Sometimes you want templates that may or may not generate parts of itself 
 based on a condition. We can do that by using the `{{ $if }}`, `{{ $elseif }}`,
 `{{ $else }}` macros.
