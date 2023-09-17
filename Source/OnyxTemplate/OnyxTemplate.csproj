@@ -17,6 +17,9 @@
         <AssemblyName>Mal.OnyxTemplate</AssemblyName>
         <Authors>Morten Aune Lyrstad</Authors>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
+        <PackageProjectUrl>https://github.com/malware-dev/onyxtemplate</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/malware-dev/onyxtemplate.git</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
     </PropertyGroup>
 
     <ItemGroup>
