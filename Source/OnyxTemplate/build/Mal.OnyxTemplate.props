@@ -1,0 +1,6 @@
+<Project>
+    <ItemGroup>
+        <None Remove="**\*.onyx" />
+        <AdditionalFiles Include="**\*.onyx" />
+    </ItemGroup>
+</Project>

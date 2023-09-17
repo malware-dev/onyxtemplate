@@ -12,12 +12,12 @@ using Microsoft.CodeAnalysis;
 namespace Mal.OnyxTemplate
 {
     /// <summary>
-    /// Generates the source code for the runtime template of a single .onyx file.
+    ///     Generates the source code for the runtime template of a single .onyx file.
     /// </summary>
     class OnyxProducer
     {
         /// <summary>
-        /// Generates the source code for the runtime template of a single .onyx file.
+        ///     Generates the source code for the runtime template of a single .onyx file.
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sourceText"></param>
@@ -44,11 +44,7 @@ namespace Mal.OnyxTemplate
                 var after = end;
                 if (TryReadMacro(ref after, out var macro))
                 {
-                    if (macro.Type == MacroType.Next && !context.IsSubScope)
-                        continue;
                     pushText();
-                    if (macro.Type == MacroType.Next)
-                        context.PopScope();
                     start = end = after;
                     context.Add(macro);
                     continue;
@@ -159,7 +155,10 @@ namespace Mal.OnyxTemplate
                     return;
                 generatedIndentation = newIndentation;
                 if (context.Indentation || force)
+                {
+                    indent();
                     builder.Append("builder.Indentation = \"").Append(newIndentation).AppendLine("\";");
+                }
             }
 
             void writeText(Macro macro)
@@ -170,11 +169,9 @@ namespace Mal.OnyxTemplate
                 else
                 {
                     writeIndenter("", true);
-                    // indent();
                     builder.Append("builder.Append(@\"")
                         .Append(macro.Source.Replace("\"", "\"\""))
                         .AppendLine("\");");
-                    // indent();
                 }
             }
 
@@ -210,86 +207,127 @@ namespace Mal.OnyxTemplate
                             builder.Append(isPublic ? "public " : "protected ").Append("virtual string Get")
                                 .Append(submacro.SourceName()).AppendLine("() { return string.Empty; }");
                             break;
+                        case MacroType.If:
+                        case MacroType.ElseIf:
+                            if (!generatedMembers.Add(submacro.SourceName()))
+                                break;
+                            indent();
+                            builder.Append(isPublic ? "public " : "protected ")
+                                .Append("virtual bool Get")
+                                .Append(submacro.SourceName()).AppendLine("() { return false; }");
+                            break;
+                        case MacroType.Else:
                         case MacroType.Text:
                         case MacroType.Next:
+                        case MacroType.End:
                             break;
                         default:
                             throw new ArgumentOutOfRangeException();
                     }
                 }
 
-                indent();
-                builder.AppendLine("public override string ToString()");
-                indent();
-                builder.AppendLine("{");
-                indentation++;
-                indent();
-                builder.AppendLine("var builder = new Writer();");
-
-
-                foreach (var submacro in macro.Macros)
+                if (macro.Type == MacroType.Root)
                 {
-                    switch (submacro.Type)
-                    {
-                        case MacroType.Text:
-                            writeText(submacro);
-                            break;
-                        case MacroType.ForEach:
-                            indent();
-                            builder.Append("foreach (var item in Get").Append(submacro.SourceName()).AppendLine("())");
-                            indent();
-                            builder.AppendLine("{");
-                            indentation++;
-                            if (submacro.IsSimpleList())
-                            {
-                                foreach (var simplemacro in submacro.Macros)
-                                {
-                                    switch (simplemacro.Type)
-                                    {
-                                        case MacroType.Text:
-                                            writeText(submacro);
-                                            break;
-                                        case MacroType.Ref:
-                                            writeIndenter(simplemacro.GenerateIndent(), simplemacro.ForceIndent());
-                                            indent();
-                                            builder.AppendLine("builder.Append(item);");
-                                            indent();
-                                            writeIndenter("", simplemacro.ForceIndent());
-                                            break;
-                                        case MacroType.Next:
-                                            break;
-                                        default:
-                                            throw new ArgumentOutOfRangeException();
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                indent();
-                                builder.AppendLine("builder.Append(item.ToString());");
-                            }
+                    indent();
+                    builder.AppendLine("public override string ToString()");
+                    indent();
+                    builder.AppendLine("{");
+                    indentation++;
+                    indent();
+                    builder.AppendLine("var builder = new Writer();");
+                }
+                else
+                {
+                    indent();
+                    builder.AppendLine("public void Write(Writer builder)");
+                    indent();
+                    builder.AppendLine("{");
+                    indentation++;
+                }
 
-                            indentation--;
-                            indent();
-                            builder.AppendLine("}");
-                            break;
-                        case MacroType.Ref:
-                            indent();
-                            writeIndenter(submacro.GenerateIndent(), submacro.ForceIndent());
-                            indent();
-                            builder.Append("builder.Append(Get").Append(submacro.SourceName()).AppendLine("());");
-                            indent();
-                            writeIndenter("", submacro.ForceIndent());
-                            break;
-                        case MacroType.Next:
-                            break;
-                        default:
-                            throw new ArgumentOutOfRangeException();
+                void writeContent(Macro parent)
+                {
+                    foreach (var submacro in parent.Macros)
+                    {
+                        switch (submacro.Type)
+                        {
+                            case MacroType.Text:
+                                writeText(submacro);
+                                break;
+                            case MacroType.ForEach:
+                                indent();
+                                builder.Append("foreach (var item in Get").Append(submacro.SourceName()).AppendLine("())");
+                                indent();
+                                builder.AppendLine("{");
+                                indentation++;
+                                if (submacro.IsSimpleList())
+                                    writeContent(submacro);
+                                else
+                                {
+                                    indent();
+                                    builder.AppendLine("item.Write(builder);");
+                                }
+
+                                indentation--;
+                                indent();
+                                builder.AppendLine("}");
+                                break;
+                            case MacroType.If:
+                                indent();
+                                builder.Append("if (Get").Append(submacro.SourceName()).AppendLine("())");
+                                indent();
+                                builder.AppendLine("{");
+                                indentation++;
+                                writeContent(submacro);
+                                indentation--;
+                                indent();
+                                builder.AppendLine("}");
+                                break;
+                            case MacroType.ElseIf:
+                                indent();
+                                builder.Append("else if (Get").Append(submacro.SourceName()).AppendLine("())");
+                                indent();
+                                builder.AppendLine("{");
+                                indentation++;
+                                writeContent(submacro);
+                                indentation--;
+                                indent();
+                                builder.AppendLine("}");
+                                break;
+                            case MacroType.Else:
+                                indent();
+                                builder.AppendLine("else");
+                                indent();
+                                builder.AppendLine("{");
+                                indentation++;
+                                writeContent(submacro);
+                                indentation--;
+                                indent();
+                                builder.AppendLine("}");
+                                break;
+                            case MacroType.Ref:
+                                writeIndenter(submacro.GenerateIndent(), submacro.ForceIndent());
+                                indent();
+                                builder.Append("builder.Append(Get").Append(submacro.SourceName()).AppendLine("());");
+                                writeIndenter("", submacro.ForceIndent());
+                                break;
+                            case MacroType.Next:
+                            case MacroType.End:
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException();
+                        }
                     }
                 }
 
-                indent();
-                builder.AppendLine("return builder.ToString();");
+                writeContent(macro);
+
+                if (macro.Type == MacroType.Root)
+                {
+                    indent();
+                    builder.AppendLine("return builder.ToString();");
+                }
+
                 indentation--;
                 indent();
                 builder.AppendLine("}");
@@ -350,8 +388,24 @@ namespace Mal.OnyxTemplate
                     end = end.SkipWhitespace(true);
                     if (!TryReadWord(ref end, out source)) return false;
                 }
+                else if (string.Equals(word, "if", StringComparison.OrdinalIgnoreCase))
+                {
+                    type = MacroType.If;
+                    end = end.SkipWhitespace(true);
+                    if (!TryReadWord(ref end, out source)) return false;
+                }
+                else if (string.Equals(word, "elseif", StringComparison.OrdinalIgnoreCase))
+                {
+                    type = MacroType.ElseIf;
+                    end = end.SkipWhitespace(true);
+                    if (!TryReadWord(ref end, out source)) return false;
+                }
+                else if (string.Equals(word, "else", StringComparison.OrdinalIgnoreCase))
+                    type = MacroType.Else;
                 else if (string.Equals(word, "next", StringComparison.OrdinalIgnoreCase))
                     type = MacroType.Next;
+                else if (string.Equals(word, "end", StringComparison.OrdinalIgnoreCase))
+                    type = MacroType.End;
                 else
                     return false;
             }
@@ -367,7 +421,7 @@ namespace Mal.OnyxTemplate
             var wantsTags = false;
             if (type == MacroType.Header)
                 wantsTags = true;
-            else if (end.Char == ':')
+            else if (type == MacroType.Ref && end.Char == ':')
             {
                 end++;
                 end = end.SkipWhitespace(true);

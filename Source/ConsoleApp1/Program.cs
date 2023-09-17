@@ -2,7 +2,7 @@
 
 using ConsoleApp1;
 
-Console.WriteLine("Hello, World!");
-
+Console.WriteLine("----");
 var test = new TestTemplate();
-Console.WriteLine(test);
+Console.Write(test);
+Console.WriteLine("----");

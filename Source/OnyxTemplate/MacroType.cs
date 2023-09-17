@@ -37,6 +37,26 @@ namespace Mal.OnyxTemplate
         /// <summary>
         /// The "next" part of <see cref="ForEach"/>.
         /// </summary>
-        Next
+        Next,
+        
+        /// <summary>
+        /// Conditional macro
+        /// </summary>
+        If,
+        
+        /// <summary>
+        /// Continuous conditional macro
+        /// </summary>
+        ElseIf,
+        
+        /// <summary>
+        /// Else portion of conditional macro
+        /// </summary>
+        Else,
+        
+        /// <summary>
+        /// End of conditional macro
+        /// </summary>
+        End
     }
 }

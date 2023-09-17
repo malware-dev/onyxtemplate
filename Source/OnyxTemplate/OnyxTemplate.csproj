@@ -5,7 +5,18 @@
         <RootNamespace>Mal.OnyxTemplate</RootNamespace>
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
         <IsRoslynComponent>True</IsRoslynComponent>
-	    <!--<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>-->
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <Version>1.0.0-alpha</Version>
+        <Title>Onyx Template</Title>
+        <Description>Simple runtime template generator. PackageReference format only.</Description>
+        <Copyright>2023 Morten Aune Lyrstad</Copyright>
+        <PackageIcon>malware256.png</PackageIcon>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageId>Mal.OnyxTemplate</PackageId>
+        <AssemblyName>Mal.OnyxTemplate</AssemblyName>
+        <Authors>Morten Aune Lyrstad</Authors>
+        <PackageReadmeFile>readme.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -15,6 +26,15 @@
         </PackageReference>
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.6.0"  PrivateAssets="all" />
         <!--<PackageReference Include="Pluralize.NET" Version="1.0.2" />-->
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="malware256.png" Pack="true" PackagePath="" />
+        <None Include="readme.md" Pack="true" PackagePath="" />
+        <None Update="tools\*.ps1" CopyToOutputDirectory="Always" Pack="true" PackagePath="" />
+        <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+        <None Include="build\**\*.*" Pack="True" PackagePath="build" />
+        <None Include="lib\**\*.*" Pack="True" PackagePath="lib" />
     </ItemGroup>
     
 </Project>

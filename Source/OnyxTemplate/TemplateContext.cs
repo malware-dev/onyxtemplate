@@ -71,13 +71,13 @@ namespace Mal.OnyxTemplate
         /// </summary>
         public bool PublicClass { get; private set; }
 
-        /// <summary>
-        /// Pop a scope macro off of the stack.
-        /// </summary>
-        public void PopScope()
-        {
-            CurrentScope = _scopes.Pop();
-        }
+        // /// <summary>
+        // /// Pop a scope macro off of the stack.
+        // /// </summary>
+        // public void PopScope()
+        // {
+        //     CurrentScope = _scopes.Pop();
+        // }
 
         /// <summary>
         /// Report an error in the template.
@@ -124,9 +124,39 @@ namespace Mal.OnyxTemplate
 
             _canConfigure = false;
 
+            switch (macro.Type)
+            {
+                case MacroType.ElseIf:
+                    if (CurrentScope.Type != MacroType.If)
+                    {
+                        Error(macro.Start, macro.End, 2, "Unexpected $elseif: No preceding $if");
+                        return;
+                    }
+                    break;
+                case MacroType.Else:
+                    if (CurrentScope.Type != MacroType.If && CurrentScope.Type != MacroType.ElseIf)
+                    {
+                        Error(macro.Start, macro.End, 2, "Unexpected $else: No preceding $if or $elseif");
+                        return;
+                    }
+                    break;
+                case MacroType.End:
+                    if (CurrentScope.Type.IsBlockStart())
+                    {
+                        Error(macro.Start, macro.End, 2, "Unexpected $end");
+                        return;
+                    }
+                    break;
+                case MacroType.Next:
+                    break;
+            }
+
+            if (macro.Type.IsEndOfScope())
+                CurrentScope = _scopes.Pop();
             macro.Parent = CurrentScope;
             CurrentScope.Macros.Add(macro);
-            if (macro.Type != MacroType.ForEach) return;
+            if (!macro.Type.IsStartOfScope())
+                return;
             _scopes.Push(CurrentScope);
             CurrentScope = macro;
         }

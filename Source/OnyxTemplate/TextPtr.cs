@@ -404,6 +404,24 @@ namespace Mal.OnyxTemplate
             else
                 builder.Append(Text, Index, Text.Length - Index);
 
+            for (var i = builder.Length - 1; i >= 0; i--)
+            {
+                switch (builder[i])
+                {
+                    case '\r':
+                        builder.Remove(i, 0);
+                        builder.Insert(i, "\r");
+                        break;
+                    case '\n':
+                        builder.Remove(i, 0);
+                        builder.Insert(i, "\n");
+                        break;
+                    case '\t':
+                        builder.Remove(i, 0);
+                        builder.Insert(i, "\t");
+                        break;
+                }
+            }
             return builder.ToString();
         }
     }

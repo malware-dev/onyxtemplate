@@ -1,2 +1,13 @@
-{{ $template indented public }}
-bla bla bla {{ Things }} and stuffiesvcxcvsdfaasdfasd12234rwerw
+Animals:
+
+{{ $foreach animal in animals }}
+    Animal Name:   {{ name }}
+    Animal Family: {{ type }}
+{{ $if a }}
+    Is A
+{{ $elseif b }}
+    Is B
+{{ $else }}
+    Is C
+{{ $end }}
+{{ $next }}
