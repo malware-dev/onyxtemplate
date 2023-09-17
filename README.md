@@ -114,7 +114,7 @@ Animals:
 So yes, that worked, but... it's not _exactly_ what we're after, is it. We'd
 prefer it if the new lines were aligned with the first macro.
 
-There's two ways we can solve this problem. We can set an `indentation` flag
+There's two ways we can solve this problem. We can set an `indented` flag
 in the template header
 ```
 {{ $template indented }}
