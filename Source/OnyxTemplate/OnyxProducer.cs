@@ -239,7 +239,7 @@ namespace Mal.OnyxTemplate
                 else
                 {
                     indent();
-                    builder.AppendLine("public void Write(Writer builder)");
+                    builder.AppendLine("public virtual void Write(Writer builder)");
                     indent();
                     builder.AppendLine("{");
                     indentation++;
