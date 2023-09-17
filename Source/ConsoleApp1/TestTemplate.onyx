@@ -1,13 +1,1 @@
-Animals:
-
-{{ $foreach animal in animals }}
-    Animal Name:   {{ name }}
-    Animal Family: {{ type }}
-{{ $if a }}
-    Is A
-{{ $elseif b }}
-    Is B
-{{ $else }}
-    Is C
-{{ $end }}
-{{ $next }}
+Mr. Jenkins, you're {{ $if isfired }}fired!{{ $else }}hired.{{ $end }} Good day.

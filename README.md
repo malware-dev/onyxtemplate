@@ -205,6 +205,15 @@ Animals:
 ```
 ---
 
+### Conditionals
+Sometimes you want templates that may or may not generate parts of itself 
+based on a condition. We can do that by using the `{{ $if }}`, `{{ $elseif }}`,
+`{{ $else }}` macros.
+```
+Mr. Jenkins, you're {{ $if isfired }}fired!{{ $else }}hired.{{ $end }}
+```
+---
+
 ## And that's it
 This library was primarily designed 1. to help me get better at making source
 generators and 2. because I needed something simple to make my _other_ source
