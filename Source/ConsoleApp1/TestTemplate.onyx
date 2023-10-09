@@ -24,14 +24,13 @@ public class DesignSystem
     {
         Colors = ImmutableDictionary.Create<string, ThemedItem<Color?>>(StringComparer.Ordinal)
 {{ $foreach color in colors }}
-{{ $if hasWarning }}
-            #warning {{ warning }}
+{{ $if hasWarning }}            #warning {{ warning }}
 {{ $end }}
-            .Add("{{ key }}", new ThemedItem<Color?>(new Color({{ darkR }}, {{ darkG }}, {{ darkB }}), new Color(lightR, lightG, lightB)))
-{{ $next }};
+            .Add("{{ key }}", new ThemedItem<Color?>(new Color({{ darkR }}, {{ darkG }}, {{ darkB }}), new Color(lightR, lightG, lightB))){{ $if $last }};{{ $end }} 
+{{ $next }}
         Brushes = ImmutableDictionary.Create<string, ThemedItem<Color?>>(StringComparer.Ordinal)
 {{ $foreach color in colors }}
-            .Add("{{ key }}", new ThemedItem<Brush?>(new SolidColorBrush(new Color({{ darkR }}, {{ darkG }}, {{ darkB }})), new SolidColorBrush(new Color({{ lightR }}, {{ lightG }}, {{ lightB }}))))
-{{ $next }};
+            .Add("{{ key }}", new ThemedItem<Brush?>(new SolidColorBrush(new Color({{ darkR }}, {{ darkG }}, {{ darkB }})), new SolidColorBrush(new Color({{ lightR }}, {{ lightG }}, {{ lightB }})))){{ $if $last }};{{ $end }} 
+{{ $next }}
     }
 }

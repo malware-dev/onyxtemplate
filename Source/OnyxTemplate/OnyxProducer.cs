@@ -14,8 +14,17 @@ namespace Mal.OnyxTemplate
     /// <summary>
     ///     Generates the source code for the runtime template of a single .onyx file.
     /// </summary>
-    internal static class OnyxProducer
+    static class OnyxProducer
     {
+        static readonly string[] KnownStates =
+        {
+            "first",
+            "last",
+            "middle",
+            "odd",
+            "even"
+        };
+
         /// <summary>
         ///     Generates the source code for the runtime template of a single .onyx file.
         /// </summary>
@@ -33,7 +42,7 @@ namespace Mal.OnyxTemplate
                 if (end.Index > start.Index)
                 {
                     var text = start.TakeUntil(end).ToString();
-                    context.Add(new Macro(MacroType.Text, start, end, null, text, null));
+                    context.Add(new Macro(MacroType.Text, start, end, null, text, false, null));
                 }
 
                 start = end;
@@ -146,6 +155,112 @@ namespace Mal.OnyxTemplate
             indent();
             builder.AppendLine("}");
 
+            indent();
+            builder.AppendLine("protected struct State");
+            indent();
+            builder.AppendLine("{");
+            indent();
+            builder.AppendLine("    public State(bool first, bool last, bool even)");
+            indent();
+            builder.AppendLine("    {");
+            indent();
+            builder.AppendLine("        First = first;");
+            indent();
+            builder.AppendLine("        Last = last;");
+            indent();
+            builder.AppendLine("        Middle = !first && !last;");
+            indent();
+            builder.AppendLine("        Odd = !even;");
+            indent();
+            builder.AppendLine("        Even = even;");
+            indent();
+            builder.AppendLine("    }");
+            indent();
+            builder.AppendLine("    public readonly bool First;");
+            indent();
+            builder.AppendLine("    public readonly bool Last;");
+            indent();
+            builder.AppendLine("    public readonly bool Middle;");
+            indent();
+            builder.AppendLine("    public readonly bool Odd;");
+            indent();
+            builder.AppendLine("    public readonly bool Even;");
+            indent();
+            builder.AppendLine("}");
+            indent();
+            builder.AppendLine("delegate void ListWriterFn<T>(Writer writer, T item, in State state);");
+            indent();
+            builder.AppendLine("static void WriteListItem<T>(IEnumerable<T> items, Writer writer, ListWriterFn<T> writeFn)");
+            indent();
+            builder.AppendLine("{");
+            indent();
+            builder.AppendLine("    using (var enumerator = items.GetEnumerator())");
+            indent();
+            builder.AppendLine("    {");
+            indent();
+            builder.AppendLine("        if (!enumerator.MoveNext())");
+            indent();
+            builder.AppendLine("            return;");
+            indent();
+            builder.AppendLine();
+            indent();
+            builder.AppendLine("        var n = 1;");
+            indent();
+            builder.AppendLine("        do");
+            indent();
+            builder.AppendLine("        {");
+            indent();
+            builder.AppendLine("            var current = enumerator.Current;");
+            indent();
+            builder.AppendLine("            var state = new State(n == 0, !enumerator.MoveNext(), n % 2 == 0);");
+            indent();
+            builder.AppendLine("            n++;");
+            indent();
+            builder.AppendLine("            writeFn(writer, current, state);");
+            indent();
+            builder.AppendLine("            if (state.Last)");
+            indent();
+            builder.AppendLine("                break;");
+            indent();
+            builder.AppendLine("        }");
+            indent();
+            builder.AppendLine("        while (true);");
+            indent();
+            builder.AppendLine("    }");
+            indent();
+            builder.AppendLine("}");
+
+            /*
+             *         using (IEnumerator<int> enumerator = numbers.GetEnumerator())
+        {
+            if (!enumerator.MoveNext())
+            {
+                Console.WriteLine("The collection is empty.");
+                return;
+            }
+
+            int current;
+            do
+            {
+                current = enumerator.Current;
+
+                if (enumerator.MoveNext())
+                {
+                    // Not the last item
+                    Console.WriteLine($"Current item is {current}, and it's not the last one.");
+                }
+                else
+                {
+                    // Last item
+                    Console.WriteLine($"Current item is {current}, and it's the last one.");
+                    break;
+                }
+            }
+            while (true);
+        }
+
+             */
+
             var macrosNeedingTypes =
                 context.Root.Descendants().Where(m => m.Type == MacroType.ForEach && !m.IsSimpleList())
                     .ToList();
@@ -168,9 +283,7 @@ namespace Mal.OnyxTemplate
             {
                 indent();
                 if (macro.Source == "\r\n" || macro.Source == "\n")
-                {
                     builder.AppendLine("builder.AppendLine();");
-                }
                 else
                 {
                     writeIndenter("", true);
@@ -183,7 +296,7 @@ namespace Mal.OnyxTemplate
             void generateWriterFunction(Macro macro)
             {
                 indent();
-                builder.Append("private void Write").Append(macro.SourceName()).Append(macro.Id).Append("(Writer builder, ").Append(macro.ItemTypeName()).AppendLine(" item)");
+                builder.Append("private void Write").Append(macro.SourceName()).Append(macro.Id).Append("(Writer builder, ").Append(macro.ItemTypeName()).AppendLine(" item, in State state)");
                 indent();
                 builder.AppendLine("{");
                 indentation++;
@@ -191,6 +304,7 @@ namespace Mal.OnyxTemplate
                 void writeContent(Macro parent)
                 {
                     foreach (var submacro in parent.Macros)
+                    {
                         switch (submacro.Type)
                         {
                             case MacroType.Text:
@@ -204,9 +318,7 @@ namespace Mal.OnyxTemplate
                                 builder.AppendLine("{");
                                 indentation++;
                                 if (submacro.IsSimpleList())
-                                {
                                     writeContent(submacro);
-                                }
                                 else
                                 {
                                     indent();
@@ -220,7 +332,10 @@ namespace Mal.OnyxTemplate
                                 break;
                             case MacroType.If:
                                 indent();
-                                builder.Append("if (item.Get").Append(submacro.SourceName()).AppendLine("())");
+                                if (submacro.IsStateField)
+                                    builder.Append("if (state.").Append(submacro.SourceName()).AppendLine(")");
+                                else
+                                    builder.Append("if (item.Get").Append(submacro.SourceName()).AppendLine("())");
                                 indent();
                                 builder.AppendLine("{");
                                 indentation++;
@@ -231,7 +346,10 @@ namespace Mal.OnyxTemplate
                                 break;
                             case MacroType.ElseIf:
                                 indent();
-                                builder.Append("else if (item.Get").Append(submacro.SourceName()).AppendLine("())");
+                                if (submacro.IsStateField)
+                                    builder.Append("else if (state.").Append(submacro.SourceName()).AppendLine(")");
+                                else
+                                    builder.Append("if (item.Get").Append(submacro.SourceName()).AppendLine("())");
                                 indent();
                                 builder.AppendLine("{");
                                 indentation++;
@@ -263,6 +381,7 @@ namespace Mal.OnyxTemplate
                             default:
                                 throw new ArgumentOutOfRangeException();
                         }
+                    }
                 }
 
                 writeContent(macro);
@@ -282,6 +401,7 @@ namespace Mal.OnyxTemplate
             {
                 var generatedMembers = new HashSet<string>();
                 foreach (var submacro in macro.Macros)
+                {
                     switch (submacro.Type)
                     {
                         case MacroType.ForEach:
@@ -289,17 +409,21 @@ namespace Mal.OnyxTemplate
                                 break;
                             indent();
                             if (submacro.IsSimpleList())
+                            {
                                 builder.Append(isPublic ? "public " : "protected ")
                                     .Append("virtual IEnumerable<string> Get")
                                     .Append(submacro.SourceName()).AppendLine("() { yield break; }");
+                            }
                             else
+                            {
                                 builder.Append(isPublic ? "public " : "protected ").Append("virtual IEnumerable<")
                                     .Append(submacro.ItemTypeName()).Append("> Get")
                                     .Append(submacro.SourceName()).AppendLine("() { yield break; }");
+                            }
 
                             break;
                         case MacroType.Ref:
-                            if (!generatedMembers.Add(submacro.SourceName()))
+                            if (submacro.IsStateField || !generatedMembers.Add(submacro.SourceName()))
                                 break;
                             indent();
                             builder.Append(isPublic ? "public " : "protected ").Append("virtual string Get")
@@ -307,7 +431,7 @@ namespace Mal.OnyxTemplate
                             break;
                         case MacroType.If:
                         case MacroType.ElseIf:
-                            if (!generatedMembers.Add(submacro.SourceName()))
+                            if (submacro.IsStateField || !generatedMembers.Add(submacro.SourceName()))
                                 break;
                             indent();
                             builder.Append(isPublic ? "public " : "protected ")
@@ -322,6 +446,7 @@ namespace Mal.OnyxTemplate
                         default:
                             throw new ArgumentOutOfRangeException();
                     }
+                }
 
                 if (macro.Type == MacroType.Root)
                 {
@@ -336,6 +461,7 @@ namespace Mal.OnyxTemplate
                     void writeContent(Macro parent)
                     {
                         foreach (var submacro in parent.Macros)
+                        {
                             switch (submacro.Type)
                             {
                                 case MacroType.Text:
@@ -343,25 +469,21 @@ namespace Mal.OnyxTemplate
                                     break;
                                 case MacroType.ForEach:
                                     indent();
-                                    builder.Append("foreach (var item in Get").Append(submacro.SourceName())
-                                        .AppendLine("())");
-                                    indent();
-                                    builder.AppendLine("{");
-                                    indentation++;
                                     if (submacro.IsSimpleList())
                                     {
+                                        builder.Append("foreach (var item in Get").Append(submacro.SourceName())
+                                            .AppendLine("())");
+                                        indent();
+                                        builder.AppendLine("{");
+                                        indentation++;
                                         writeContent(submacro);
+                                        indentation--;
+                                        indent();
+                                        builder.AppendLine("}");
                                     }
                                     else
-                                    {
-                                        indent();
-                                        builder.Append("Write").Append(submacro.SourceName()).Append(submacro.Id)
-                                            .AppendLine("(builder, item);");
-                                    }
+                                        builder.Append("WriteListItem(Get").Append(submacro.SourceName()).Append("(), builder, ").Append("Write").Append(submacro.SourceName()).Append(submacro.Id).AppendLine(");");
 
-                                    indentation--;
-                                    indent();
-                                    builder.AppendLine("}");
                                     break;
                                 case MacroType.If:
                                     indent();
@@ -409,6 +531,7 @@ namespace Mal.OnyxTemplate
                                 default:
                                     throw new ArgumentOutOfRangeException();
                             }
+                        }
                     }
 
                     writeContent(macro);
@@ -426,19 +549,15 @@ namespace Mal.OnyxTemplate
             }
 
             foreach (var macro in macrosNeedingTypes)
-            {
                 generateWriterFunction(macro);
-            }
 
             Macro merge(IGrouping<string, Macro> macros)
             {
-                var macro = new Macro(MacroType.Ref, default, default, "Bullfrog", macros.First().Source, new HashSet<string>());
+                var macro = new Macro(MacroType.Ref, default, default, "Coalesce", macros.First().Source, false, new HashSet<string>());
                 foreach (var sub in macros)
                 {
-                    foreach (var child in sub.Macros.Where(child => macro.Macros.All(m => m.SourceName() != child.SourceName())))
-                    {
+                    foreach (var child in sub.Descendants().Where(child => macro.Type != MacroType.ForEach && macro.Macros.All(m => m.SourceName() != child.SourceName())))
                         macro.Macros.Add(child);
-                    }
                 }
 
                 return macro;
@@ -446,7 +565,7 @@ namespace Mal.OnyxTemplate
 
             var combinedTypes = macrosNeedingTypes.GroupBy(m => m.ItemTypeName())
                 .Select(merge).ToList();
-        
+
             foreach (var macro in combinedTypes)
             {
                 indent();
@@ -471,7 +590,7 @@ namespace Mal.OnyxTemplate
             context.AddSource(hintName, builder.ToString());
         }
 
-        private static bool TryReadMacro(ref TextPtr ptr, out Macro macro)
+        static bool TryReadMacro(ref TextPtr ptr, out Macro macro)
         {
             macro = default;
             if (!ptr.StartsWith("{{"))
@@ -480,6 +599,7 @@ namespace Mal.OnyxTemplate
             MacroType type;
             string name = null;
             string source = null;
+            var isStateField = false;
             var isStartOfLine = ptr.IsAtStartOfLine();
 
             if (end.Char == '$')
@@ -506,30 +626,28 @@ namespace Mal.OnyxTemplate
                 {
                     type = MacroType.If;
                     end = end.SkipWhitespace(true);
-                    if (!TryReadWord(ref end, out source)) return false;
+                    if (TryReadStateName(ref end, out source))
+                        isStateField = true;
+                    else if (!TryReadWord(ref end, out source))
+                        return false;
                 }
                 else if (string.Equals(word, "elseif", StringComparison.OrdinalIgnoreCase))
                 {
                     type = MacroType.ElseIf;
                     end = end.SkipWhitespace(true);
-                    if (!TryReadWord(ref end, out source)) return false;
+                    if (TryReadStateName(ref end, out source))
+                        isStateField = true;
+                    else if (!TryReadWord(ref end, out source))
+                        return false;
                 }
                 else if (string.Equals(word, "else", StringComparison.OrdinalIgnoreCase))
-                {
                     type = MacroType.Else;
-                }
                 else if (string.Equals(word, "next", StringComparison.OrdinalIgnoreCase))
-                {
                     type = MacroType.Next;
-                }
                 else if (string.Equals(word, "end", StringComparison.OrdinalIgnoreCase))
-                {
                     type = MacroType.End;
-                }
                 else
-                {
                     return false;
-                }
             }
             else
             {
@@ -542,9 +660,7 @@ namespace Mal.OnyxTemplate
 
             var wantsTags = false;
             if (type == MacroType.Header)
-            {
                 wantsTags = true;
-            }
             else if (type == MacroType.Ref && end.Char == ':')
             {
                 end++;
@@ -573,7 +689,7 @@ namespace Mal.OnyxTemplate
             if (!end.StartsWith("}}")) return false;
             end += 2;
             var isEndOfLine = end.IsNewLine();
-            macro = new Macro(type, ptr, end, name, source, tags);
+            macro = new Macro(type, ptr, end, name, source, isStateField, tags);
             if (isStartOfLine && isEndOfLine && type != MacroType.Ref)
                 ptr = end.FindEndOfLine(true);
             else
@@ -581,7 +697,26 @@ namespace Mal.OnyxTemplate
             return true;
         }
 
-        private static bool TryReadWord(ref TextPtr ptr, out string word, string keyword = null)
+        static bool TryReadStateName(ref TextPtr ptr, out string macro)
+        {
+            macro = null;
+            if (ptr.Char != '$')
+                return false;
+            var end = ptr + 1;
+            if (!char.IsLetter(end.Char) && end.Char != '_')
+                return false;
+            end++;
+            while (!end.IsPastEnd() && (char.IsLetterOrDigit(end.Char) || end.Char == '_'))
+                end++;
+            var value = (ptr + 1).TakeUntil(end).ToString();
+            if (KnownStates.All(s => !string.Equals(s, value, StringComparison.OrdinalIgnoreCase)))
+                return false;
+            macro = value;
+            ptr = end;
+            return true;
+        }
+
+        static bool TryReadWord(ref TextPtr ptr, out string word, string keyword = null)
         {
             word = null;
             if (!char.IsLetter(ptr.Char) && ptr.Char != '_')

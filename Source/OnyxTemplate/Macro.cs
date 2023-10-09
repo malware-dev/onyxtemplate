@@ -14,14 +14,74 @@ namespace Mal.OnyxTemplate
     ///     A macro definition of a .onyx template.
     /// </summary>
     [DebuggerDisplay("{ToDebugString(),nq}")]
-    internal class Macro
+    class Macro
     {
         // ReSharper disable once InconsistentNaming
-        private static long __idSrc;
-        private readonly bool _forceIndent;
-        private string _itemName;
-        private string _itemTypeName;
-        private string _sourceName;
+        static long __idSrc;
+
+        /// <summary>
+        ///     Converts an input string to a C# identifier.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="camelCase">Produce camelCase rather than PascalCase.</param>
+        /// <returns></returns>
+        public static string CSharpify(string input, bool camelCase = false)
+        {
+            if (string.IsNullOrEmpty(input))
+                return "_";
+
+            var buffer = new StringBuilder();
+            var firstChar = input[0];
+
+            if (camelCase)
+                buffer.Append(char.IsDigit(firstChar) ? '_' : char.ToLower(firstChar));
+            else
+                buffer.Append(char.IsDigit(firstChar) ? '_' : char.ToUpper(firstChar));
+
+            for (var i = 1; i < input.Length; i++)
+            {
+                var c = input[i];
+
+                if (char.IsLetterOrDigit(c))
+                    buffer.Append(c);
+                else
+                {
+                    switch (c)
+                    {
+                        case 'æ':
+                            buffer.Append("ae");
+                            break;
+                        case 'ø':
+                            buffer.Append("oe");
+                            break;
+                        case 'å':
+                            buffer.Append("aa");
+                            break;
+                        case 'ü':
+                            buffer.Append("ue");
+                            break;
+                        case 'ö':
+                            buffer.Append("oe");
+                            break;
+                        case 'ä':
+                            buffer.Append("ae");
+                            break;
+                        case 'ß':
+                            buffer.Append("ss");
+                            break;
+                        default:
+                            buffer.Append('_');
+                            break;
+                    }
+                }
+            }
+
+            return buffer.ToString();
+        }
+
+        readonly bool _forceIndent;
+        string _itemTypeName;
+        string _sourceName;
 
         /// <summary>
         ///     Creates a new <see cref="Macro" />.
@@ -31,14 +91,16 @@ namespace Mal.OnyxTemplate
         /// <param name="end"></param>
         /// <param name="name"></param>
         /// <param name="source"></param>
+        /// <param name="isStateField"></param>
         /// <param name="tags"></param>
-        public Macro(MacroType type, TextPtr start, TextPtr end, string name, string source, HashSet<string> tags)
+        public Macro(MacroType type, TextPtr start, TextPtr end, string name, string source, bool isStateField, HashSet<string> tags)
         {
             Type = type;
             Start = start;
             End = end;
             Name = name;
             Source = source;
+            IsStateField = isStateField;
             Tags = tags;
             _forceIndent = tags?.Contains("indent") ?? false;
         }
@@ -71,6 +133,11 @@ namespace Mal.OnyxTemplate
         public string Source { get; }
 
         /// <summary>
+        /// Whether <see cref="Source"/> refers to a state field rather than a data field.
+        /// </summary>
+        public bool IsStateField { get; }
+
+        /// <summary>
         ///     A list of macro tags.
         /// </summary>
         public HashSet<string> Tags { get; }
@@ -84,64 +151,6 @@ namespace Mal.OnyxTemplate
         ///     The parent macro.
         /// </summary>
         public Macro Parent { get; set; }
-
-        /// <summary>
-        ///     Converts an input string to a C# identifier.
-        /// </summary>
-        /// <param name="input"></param>
-        /// <param name="camelCase">Produce camelCase rather than PascalCase.</param>
-        /// <returns></returns>
-        public static string CSharpify(string input, bool camelCase = false)
-        {
-            if (string.IsNullOrEmpty(input))
-                return "_";
-
-            var buffer = new StringBuilder();
-            var firstChar = input[0];
-
-            if (camelCase)
-                buffer.Append(char.IsDigit(firstChar) ? '_' : char.ToLower(firstChar));
-            else
-                buffer.Append(char.IsDigit(firstChar) ? '_' : char.ToUpper(firstChar));
-
-            for (var i = 1; i < input.Length; i++)
-            {
-                var c = input[i];
-
-                if (char.IsLetterOrDigit(c))
-                    buffer.Append(c);
-                else
-                    switch (c)
-                    {
-                        case 'æ':
-                            buffer.Append("ae");
-                            break;
-                        case 'ø':
-                            buffer.Append("oe");
-                            break;
-                        case 'å':
-                            buffer.Append("aa");
-                            break;
-                        case 'ü':
-                            buffer.Append("ue");
-                            break;
-                        case 'ö':
-                            buffer.Append("oe");
-                            break;
-                        case 'ä':
-                            buffer.Append("ae");
-                            break;
-                        case 'ß':
-                            buffer.Append("ss");
-                            break;
-                        default:
-                            buffer.Append('_');
-                            break;
-                    }
-            }
-
-            return buffer.ToString();
-        }
 
         /// <summary>
         ///     The type name to use for complex macros (<see cref="MacroType.ForEach" /> type macros).
@@ -203,10 +212,10 @@ namespace Mal.OnyxTemplate
         public bool IsSimpleList()
         {
             return Macros.All(m => m.Type == MacroType.Text) || Macros.All(m => m.Type == MacroType.Text ||
-                (m.Type == MacroType.Ref &&
-                 string.Equals(m.Source,
-                     Name,
-                     StringComparison.OrdinalIgnoreCase)));
+                                                                                m.Type == MacroType.Ref &&
+                                                                                string.Equals(m.Source,
+                                                                                    Name,
+                                                                                    StringComparison.OrdinalIgnoreCase));
         }
 
         /// <summary>
@@ -230,12 +239,9 @@ namespace Mal.OnyxTemplate
         ///     Whether indentation should be forced even if indentation not enabled globally.
         /// </summary>
         /// <returns></returns>
-        public bool ForceIndent()
-        {
-            return _forceIndent;
-        }
+        public bool ForceIndent() => _forceIndent;
 
-        private string ToDebugString()
+        string ToDebugString()
         {
             var builder = new StringBuilder();
             builder.Append(Type).Append(" ").Append(Source);
