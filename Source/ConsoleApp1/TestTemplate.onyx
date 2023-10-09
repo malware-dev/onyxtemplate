@@ -24,6 +24,9 @@ public class DesignSystem
     {
         Colors = ImmutableDictionary.Create<string, ThemedItem<Color?>>(StringComparer.Ordinal)
 {{ $foreach color in colors }}
+{{ $if hasWarning }}
+            #warning {{ warning }}
+{{ $end }}
             .Add("{{ key }}", new ThemedItem<Color?>(new Color({{ darkR }}, {{ darkG }}, {{ darkB }}), new Color(lightR, lightG, lightB)))
 {{ $next }};
         Brushes = ImmutableDictionary.Create<string, ThemedItem<Color?>>(StringComparer.Ordinal)

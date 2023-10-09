@@ -161,7 +161,11 @@ namespace Mal.OnyxTemplate
             builder.Append(CSharpify(Source) + "ItemBase");
             var macro = Parent;
             while (macro.Type != MacroType.Root)
+            {
                 builder.Insert(0, CSharpify(macro.Source));
+                macro = macro.Parent;
+            }
+
             _itemTypeName = builder.ToString();
             return _itemTypeName;
         }
