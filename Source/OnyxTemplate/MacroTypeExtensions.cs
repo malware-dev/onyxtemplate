@@ -74,6 +74,7 @@ namespace Mal.OnyxTemplate
             {
                 case MacroType.If:
                 case MacroType.ElseIf:
+                case MacroType.Else:
                     return true;
 
                 case MacroType.Root:
@@ -82,7 +83,6 @@ namespace Mal.OnyxTemplate
                 case MacroType.Ref:
                 case MacroType.ForEach:
                 case MacroType.Next:
-                case MacroType.Else:
                 case MacroType.End:
                 default:
                     return false;

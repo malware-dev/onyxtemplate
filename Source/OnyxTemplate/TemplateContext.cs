@@ -141,7 +141,7 @@ namespace Mal.OnyxTemplate
                     }
                     break;
                 case MacroType.End:
-                    if (CurrentScope.Type.IsBlockStart())
+                    if (!CurrentScope.Type.IsBlockStart())
                     {
                         Error(macro.Start, macro.End, 2, "Unexpected $end");
                         return;
