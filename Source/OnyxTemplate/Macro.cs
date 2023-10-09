@@ -11,13 +11,82 @@ using System.Text;
 namespace Mal.OnyxTemplate
 {
     /// <summary>
-    /// A macro definition of a .onyx template.
+    ///     A macro definition of a .onyx template.
     /// </summary>
     [DebuggerDisplay("{ToDebugString(),nq}")]
-    class Macro
+    internal class Macro
     {
+        // ReSharper disable once InconsistentNaming
+        private static long __idSrc;
+        private readonly bool _forceIndent;
+        private string _itemName;
+        private string _itemTypeName;
+        private string _sourceName;
+
         /// <summary>
-        /// Converts an input string to a C# identifier.
+        ///     Creates a new <see cref="Macro" />.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <param name="name"></param>
+        /// <param name="source"></param>
+        /// <param name="tags"></param>
+        public Macro(MacroType type, TextPtr start, TextPtr end, string name, string source, HashSet<string> tags)
+        {
+            Type = type;
+            Start = start;
+            End = end;
+            Name = name;
+            Source = source;
+            Tags = tags;
+            _forceIndent = tags?.Contains("indent") ?? false;
+        }
+
+        public long Id { get; } = ++__idSrc;
+
+        /// <summary>
+        ///     What type of macro this is.
+        /// </summary>
+        public MacroType Type { get; }
+
+        /// <summary>
+        ///     The start point of this macro in the source .onyx text.
+        /// </summary>
+        public TextPtr Start { get; }
+
+        /// <summary>
+        ///     The end point of this macro in the source .onyx text.
+        /// </summary>
+        public TextPtr End { get; }
+
+        /// <summary>
+        ///     The name of this macro. Primarily used for the <see cref="MacroType.ForEach" /> macro type.
+        /// </summary>
+        public string Name { get; }
+
+        /// <summary>
+        ///     The name of the source for this macro - or the raw text for a <see cref="MacroType.Text" /> macro.
+        /// </summary>
+        public string Source { get; }
+
+        /// <summary>
+        ///     A list of macro tags.
+        /// </summary>
+        public HashSet<string> Tags { get; }
+
+        /// <summary>
+        ///     Child macros for <see cref="MacroType.ForEach" /> type macros.
+        /// </summary>
+        public List<Macro> Macros { get; } = new List<Macro>();
+
+        /// <summary>
+        ///     The parent macro.
+        /// </summary>
+        public Macro Parent { get; set; }
+
+        /// <summary>
+        ///     Converts an input string to a C# identifier.
         /// </summary>
         /// <param name="input"></param>
         /// <param name="camelCase">Produce camelCase rather than PascalCase.</param>
@@ -42,7 +111,6 @@ namespace Mal.OnyxTemplate
                 if (char.IsLetterOrDigit(c))
                     buffer.Append(c);
                 else
-                {
                     switch (c)
                     {
                         case 'æ':
@@ -70,85 +138,20 @@ namespace Mal.OnyxTemplate
                             buffer.Append('_');
                             break;
                     }
-                }
             }
 
             return buffer.ToString();
         }
 
-        string _itemTypeName;
-        string _sourceName;
-        readonly bool _forceIndent;
-
         /// <summary>
-        /// Creates a new <see cref="Macro"/>.
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="start"></param>
-        /// <param name="end"></param>
-        /// <param name="name"></param>
-        /// <param name="source"></param>
-        /// <param name="tags"></param>
-        public Macro(MacroType type, TextPtr start, TextPtr end, string name, string source, HashSet<string> tags)
-        {
-            Type = type;
-            Start = start;
-            End = end;
-            Name = name;
-            Source = source;
-            Tags = tags;
-            _forceIndent = tags?.Contains("indent") ?? false;
-        }
-
-        /// <summary>
-        /// What type of macro this is.
-        /// </summary>
-        public MacroType Type { get; }
-        
-        /// <summary>
-        /// The start point of this macro in the source .onyx text.
-        /// </summary>
-        public TextPtr Start { get; }
-        
-        /// <summary>
-        /// The end point of this macro in the source .onyx text.
-        /// </summary>
-        public TextPtr End { get; }
-        
-        /// <summary>
-        /// The name of this macro. Primarily used for the <see cref="MacroType.ForEach"/> macro type.
-        /// </summary>
-        public string Name { get; }
-        
-        /// <summary>
-        /// The name of the source for this macro - or the raw text for a <see cref="MacroType.Text"/> macro.
-        /// </summary>
-        public string Source { get; }
-        
-        /// <summary>
-        /// A list of macro tags.
-        /// </summary>
-        public HashSet<string> Tags { get; }
-        
-        /// <summary>
-        /// Child macros for <see cref="MacroType.ForEach"/> type macros.
-        /// </summary>
-        public List<Macro> Macros { get; } = new List<Macro>();
-        
-        /// <summary>
-        /// The parent macro.
-        /// </summary>
-        public Macro Parent { get; set; }
-
-        /// <summary>
-        /// The type name to use for complex macros (<see cref="MacroType.ForEach"/> type macros).
+        ///     The type name to use for complex macros (<see cref="MacroType.ForEach" /> type macros).
         /// </summary>
         /// <returns></returns>
         public string ItemTypeName()
         {
             if (_itemTypeName != null)
                 return _itemTypeName;
-            if (Parent.Type == MacroType.Root)
+            if (Parent == null || Parent.Type == MacroType.Root)
             {
                 _itemTypeName = CSharpify(Source) + "ItemBase";
                 return _itemTypeName;
@@ -164,7 +167,7 @@ namespace Mal.OnyxTemplate
         }
 
         /// <summary>
-        /// The <see cref="SourceName"/> in a <see cref="CSharpify"/> processed way.
+        ///     The <see cref="SourceName" /> in a <see cref="CSharpify" /> processed way.
         /// </summary>
         /// <returns></returns>
         public string SourceName()
@@ -176,7 +179,7 @@ namespace Mal.OnyxTemplate
         }
 
         /// <summary>
-        /// A flat list of all the descendants of this macro tree.
+        ///     A flat list of all the descendants of this macro tree.
         /// </summary>
         /// <returns></returns>
         public IEnumerable<Macro> Descendants()
@@ -190,20 +193,20 @@ namespace Mal.OnyxTemplate
         }
 
         /// <summary>
-        /// Whether this is a simple (single-macro) list.
+        ///     Whether this is a simple (single-macro) list.
         /// </summary>
         /// <returns></returns>
         public bool IsSimpleList()
         {
             return Macros.All(m => m.Type == MacroType.Text) || Macros.All(m => m.Type == MacroType.Text ||
-                                                                                m.Type == MacroType.Ref &&
-                                                                                string.Equals(m.Source,
-                                                                                    Name,
-                                                                                    StringComparison.OrdinalIgnoreCase));
+                (m.Type == MacroType.Ref &&
+                 string.Equals(m.Source,
+                     Name,
+                     StringComparison.OrdinalIgnoreCase)));
         }
 
         /// <summary>
-        /// Generates the indentation required for the position of this macro.
+        ///     Generates the indentation required for the position of this macro.
         /// </summary>
         /// <returns></returns>
         public string GenerateIndent()
@@ -220,12 +223,15 @@ namespace Mal.OnyxTemplate
         }
 
         /// <summary>
-        /// Whether indentation should be forced even if indentation not enabled globally.
+        ///     Whether indentation should be forced even if indentation not enabled globally.
         /// </summary>
         /// <returns></returns>
-        public bool ForceIndent() => _forceIndent;
+        public bool ForceIndent()
+        {
+            return _forceIndent;
+        }
 
-        string ToDebugString()
+        private string ToDebugString()
         {
             var builder = new StringBuilder();
             builder.Append(Type).Append(" ").Append(Source);

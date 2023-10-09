@@ -2,5 +2,4 @@
 
 class TestTemplate : TestTemplateBase
 {
-    protected override bool GetIsfired() => false;
 }

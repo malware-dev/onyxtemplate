@@ -6,7 +6,7 @@
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
         <IsRoslynComponent>True</IsRoslynComponent>
         <IncludeBuildOutput>false</IncludeBuildOutput>
-        <Version>1.1.1-alpha</Version>
+        <Version>1.1.2-alpha</Version>
         <Title>Onyx Template</Title>
         <Description>Simple runtime template generator. PackageReference format only.</Description>
         <Copyright>2023 Morten Aune Lyrstad</Copyright>
