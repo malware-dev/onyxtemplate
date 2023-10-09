@@ -1,1 +1,37 @@
-Mr. Jenkins, you're {{ $if isfired }}fired!{{ $else }}hired.{{ $end }} Good day.
+using Microsoft.Maui.Controls;
+using Microsoft.Maui.Graphics;
+using System;
+using System.Collections.Immutable;
+
+namespace {{ namespace }};
+
+/// <summary>
+/// A collection of resources divided by Dark and Light themes. 
+/// </summary>
+public class DesignSystem
+{
+    /// <summary>
+    /// A list of themed <see cref="Color"/>s 
+    /// </summary>
+    public static readonly ImmutableDictionary<string, ThemedItem<Color?>> Colors;
+    
+    /// <summary>
+    /// A list of themed <see cref="Brush"/>es
+    /// </summary>
+    public static readonly ImmutableDictionary<string, ThemedItem<Brush?>> Brushes;
+
+    static ThemeTemplate()
+    {
+        Colors = ImmutableDictionary.Create<string, ThemedItem<Color?>>(StringComparer.Ordinal)
+{{ $foreach color in colors }}
+{{ $if hasWarning }}
+            #warning {{ warning }}
+{{ $end }}
+            .Add("{{ key }}", new ThemedItem<Color?>(new Color({{ darkR }}, {{ darkG }}, {{ darkB }}), new Color(lightR, lightG, lightB)))
+{{ $next }};
+        Brushes = ImmutableDictionary.Create<string, ThemedItem<Color?>>(StringComparer.Ordinal)
+{{ $foreach color in colors }}
+            .Add("{{ key }}", new ThemedItem<Brush?>(new SolidColorBrush(new Color({{ darkR }}, {{ darkG }}, {{ darkB }})), new SolidColorBrush(new Color({{ lightR }}, {{ lightG }}, {{ lightB }}))))
+{{ $next }};
+    }
+}
