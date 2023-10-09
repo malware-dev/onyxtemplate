@@ -6,7 +6,7 @@
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
         <IsRoslynComponent>True</IsRoslynComponent>
         <IncludeBuildOutput>false</IncludeBuildOutput>
-        <Version>1.1.5-alpha</Version>
+        <Version>1.1.7-alpha</Version>
         <Title>Onyx Template</Title>
         <Description>Simple runtime template generator. PackageReference format only.</Description>
         <Copyright>2023 Morten Aune Lyrstad</Copyright>
@@ -20,6 +20,7 @@
         <PackageProjectUrl>https://github.com/malware-dev/onyxtemplate</PackageProjectUrl>
         <RepositoryUrl>https://github.com/malware-dev/onyxtemplate.git</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
+        <PackageReleaseNotes>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/ReleaseNotes.txt"))</PackageReleaseNotes>
     </PropertyGroup>
 
     <ItemGroup>

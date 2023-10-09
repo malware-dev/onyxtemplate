@@ -1,0 +1,8 @@
+﻿v.1.1.7-alpha
+ - Learned how to include release notes!
+
+v.1.1.6-alpha
+ - Added "not" support to conditionals
+ - Now supports item states {{ $if <state> }} where <state> can be $first $last $middle $odd $even
+ - Fixed bad end check, fixed bad location of Else macro type check
+ - Fixed a rather ugly infinite loop
