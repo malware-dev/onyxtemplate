@@ -83,6 +83,8 @@ Animals:
    Bear
 ```
 
+_See also [item state conditionals](#item-state-conditionals)_
+
 ---
 
 ## Dealing with multiline macros
@@ -212,6 +214,27 @@ based on a condition. We can do that by using the `{{ $if }}`, `{{ $elseif }}`,
 ```
 Mr. Jenkins, you're {{ $if isfired }}fired!{{ $else }}hired.{{ $end }}
 ```
+You can invert a condition by including the `not` modifier
+```
+Mr. Jenkins, you're {{ $if not isfired }}hired.{{ $else }}fired!{{ $end }}
+```
+
+### Item state conditionals
+You can query a set of states about items in a [`$foreach`](#repeating-data-foreach) 
+by using a specialized set of fields:
+- `$first` The item is the first item of the list.
+- `$last` The item is the last item of the list.
+- `$middle` The item is neither the first nor the last item in the list.
+- `$odd` The item is of odd numbered index.
+- `$even` The item is of even numbered index.
+
+```
+{{ $foreach item in list }}
+    item.name{{ $if not $last }},{{ $end }}
+{{ $next}}
+```
+
+
 ---
 
 ## And that's it

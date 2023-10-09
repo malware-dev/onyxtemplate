@@ -42,7 +42,7 @@ namespace Mal.OnyxTemplate
                 if (end.Index > start.Index)
                 {
                     var text = start.TakeUntil(end).ToString();
-                    context.Add(new Macro(MacroType.Text, start, end, null, text, false, null));
+                    context.Add(new Macro(MacroType.Text, start, end, null, text, false, false, null));
                 }
 
                 start = end;
@@ -168,23 +168,19 @@ namespace Mal.OnyxTemplate
             indent();
             builder.AppendLine("        Last = last;");
             indent();
-            builder.AppendLine("        Middle = !first && !last;");
-            indent();
-            builder.AppendLine("        Odd = !even;");
-            indent();
             builder.AppendLine("        Even = even;");
             indent();
             builder.AppendLine("    }");
             indent();
-            builder.AppendLine("    public readonly bool First;");
+            builder.AppendLine("    public bool First { get; }");
             indent();
-            builder.AppendLine("    public readonly bool Last;");
+            builder.AppendLine("    public bool Last { get; }");
             indent();
-            builder.AppendLine("    public readonly bool Middle;");
+            builder.AppendLine("    public bool Even { get; }");
             indent();
-            builder.AppendLine("    public readonly bool Odd;");
+            builder.AppendLine("    public bool Middle => !First && !Last;");
             indent();
-            builder.AppendLine("    public readonly bool Even;");
+            builder.AppendLine("    public bool Odd => !Even;");
             indent();
             builder.AppendLine("}");
             indent();
@@ -332,10 +328,13 @@ namespace Mal.OnyxTemplate
                                 break;
                             case MacroType.If:
                                 indent();
+                                builder.Append("if (");
+                                if (submacro.IsNot)
+                                    builder.Append("!");
                                 if (submacro.IsStateField)
-                                    builder.Append("if (state.").Append(submacro.SourceName()).AppendLine(")");
+                                    builder.Append("state.").Append(submacro.SourceName()).AppendLine(")");
                                 else
-                                    builder.Append("if (item.Get").Append(submacro.SourceName()).AppendLine("())");
+                                    builder.Append("item.Get").Append(submacro.SourceName()).AppendLine("())");
                                 indent();
                                 builder.AppendLine("{");
                                 indentation++;
@@ -487,7 +486,10 @@ namespace Mal.OnyxTemplate
                                     break;
                                 case MacroType.If:
                                     indent();
-                                    builder.Append("if (Get").Append(submacro.SourceName()).AppendLine("())");
+                                    builder.Append("if (");
+                                    if (submacro.IsNot)
+                                        builder.Append("!");
+                                    builder.Append("Get").Append(submacro.SourceName()).AppendLine("())");
                                     indent();
                                     builder.AppendLine("{");
                                     indentation++;
@@ -553,7 +555,7 @@ namespace Mal.OnyxTemplate
 
             Macro merge(IGrouping<string, Macro> macros)
             {
-                var macro = new Macro(MacroType.Ref, default, default, "Coalesce", macros.First().Source, false, new HashSet<string>());
+                var macro = new Macro(MacroType.Ref, default, default, "Coalesce", macros.First().Source, false, false, new HashSet<string>());
                 foreach (var sub in macros)
                 {
                     foreach (var child in sub.Descendants().Where(child => macro.Type != MacroType.ForEach && macro.Macros.All(m => m.SourceName() != child.SourceName())))
@@ -601,6 +603,7 @@ namespace Mal.OnyxTemplate
             string source = null;
             var isStateField = false;
             var isStartOfLine = ptr.IsAtStartOfLine();
+            var not = false;
 
             if (end.Char == '$')
             {
@@ -630,6 +633,13 @@ namespace Mal.OnyxTemplate
                         isStateField = true;
                     else if (!TryReadWord(ref end, out source))
                         return false;
+                    else if (string.Equals(source, "not", StringComparison.OrdinalIgnoreCase))
+                    {
+                        not = true;
+                        end = end.SkipWhitespace(true);
+                        if (!TryReadWord(ref end, out source))
+                            return false;
+                    }
                 }
                 else if (string.Equals(word, "elseif", StringComparison.OrdinalIgnoreCase))
                 {
@@ -639,6 +649,13 @@ namespace Mal.OnyxTemplate
                         isStateField = true;
                     else if (!TryReadWord(ref end, out source))
                         return false;
+                    else if (string.Equals(source, "not", StringComparison.OrdinalIgnoreCase))
+                    {
+                        not = true;
+                        end = end.SkipWhitespace(true);
+                        if (!TryReadWord(ref end, out source))
+                            return false;
+                    }
                 }
                 else if (string.Equals(word, "else", StringComparison.OrdinalIgnoreCase))
                     type = MacroType.Else;
@@ -689,7 +706,7 @@ namespace Mal.OnyxTemplate
             if (!end.StartsWith("}}")) return false;
             end += 2;
             var isEndOfLine = end.IsNewLine();
-            macro = new Macro(type, ptr, end, name, source, isStateField, tags);
+            macro = new Macro(type, ptr, end, name, source, isStateField, not, tags);
             if (isStartOfLine && isEndOfLine && type != MacroType.Ref)
                 ptr = end.FindEndOfLine(true);
             else

@@ -52,7 +52,7 @@ namespace Mal.OnyxTemplate
         /// <summary>
         /// The root macro.
         /// </summary>
-        public Macro Root { get; } = new Macro(MacroType.Root, new TextPtr(), new TextPtr(), null, null, false, null);
+        public Macro Root { get; } = new Macro(MacroType.Root, new TextPtr(), new TextPtr(), null, null, false, false, null);
 
         /// <summary>
         /// Whether this is a subscope (i.e. not the root node). 

@@ -92,8 +92,9 @@ namespace Mal.OnyxTemplate
         /// <param name="name"></param>
         /// <param name="source"></param>
         /// <param name="isStateField"></param>
+        /// <param name="not"></param>
         /// <param name="tags"></param>
-        public Macro(MacroType type, TextPtr start, TextPtr end, string name, string source, bool isStateField, HashSet<string> tags)
+        public Macro(MacroType type, TextPtr start, TextPtr end, string name, string source, bool isStateField, bool not, HashSet<string> tags)
         {
             Type = type;
             Start = start;
@@ -102,9 +103,10 @@ namespace Mal.OnyxTemplate
             Source = source;
             IsStateField = isStateField;
             Tags = tags;
+            IsNot = not;
             _forceIndent = tags?.Contains("indent") ?? false;
         }
-
+        
         public long Id { get; } = ++__idSrc;
 
         /// <summary>
@@ -112,6 +114,11 @@ namespace Mal.OnyxTemplate
         /// </summary>
         public MacroType Type { get; }
 
+        /// <summary>
+        /// For a <see cref="Type"/> <see cref="MacroType.If"/> or <see cref="MacroType.ElseIf"/>, denotes a negative check.
+        /// </summary>
+        public bool IsNot { get; set; }
+        
         /// <summary>
         ///     The start point of this macro in the source .onyx text.
         /// </summary>
