@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
-
 namespace Mal.OnyxTemplate
 {
     /// <summary>
@@ -33,7 +32,7 @@ namespace Mal.OnyxTemplate
         /// <exception cref="ArgumentOutOfRangeException"></exception>
         public static void GenerateOnyxSource(TemplateContext context, AdditionalText sourceText)
         {
-            var className = Macro.CSharpify(Path.GetFileNameWithoutExtension(sourceText.Path) + "Base");
+            var className = Macro.CSharpify(Path.GetFileNameWithoutExtension(sourceText.Path));
             var start = new TextPtr(sourceText.GetText()?.ToString() ?? "");
             var end = start;
 
@@ -65,15 +64,18 @@ namespace Mal.OnyxTemplate
             pushText();
 
             var builder = new StringBuilder();
-            builder.AppendLine(
-                "#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.");
+            // builder.AppendLine(
+            //     "#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.");
+            // builder.AppendLine(
+            //     "#pragma warning disable CS8618 // Non-nullable property '{0}' must contain a non-null value when exiting constructor..");
+            if (context.SupportsNullable)
+                builder.AppendLine("#nullable disable");
             builder.AppendLine("using System.Text;");
             builder.AppendLine("using System.Collections.Generic;");
             builder.AppendLine();
             builder.Append("namespace ").AppendLine(context.RootNamespace ?? "OnyxTemplates");
             builder.AppendLine("{");
-            builder.Append("    ").Append(context.PublicClass ? "public " : "internal ").Append("abstract class ")
-                .AppendLine(className);
+            builder.Append("    ").Append(context.PublicClass ? "public " : "internal ").Append("class ").AppendLine(className);
             builder.AppendLine("    {");
             var indentation = 2;
 
@@ -82,6 +84,8 @@ namespace Mal.OnyxTemplate
                 builder.Append(' ', indentation * 4);
             }
 
+            indent();
+            builder.AppendLine("#region Framework");
             indent();
             builder.AppendLine("protected class Writer");
             indent();
@@ -225,37 +229,8 @@ namespace Mal.OnyxTemplate
             builder.AppendLine("    }");
             indent();
             builder.AppendLine("}");
-
-            /*
-             *         using (IEnumerator<int> enumerator = numbers.GetEnumerator())
-        {
-            if (!enumerator.MoveNext())
-            {
-                Console.WriteLine("The collection is empty.");
-                return;
-            }
-
-            int current;
-            do
-            {
-                current = enumerator.Current;
-
-                if (enumerator.MoveNext())
-                {
-                    // Not the last item
-                    Console.WriteLine($"Current item is {current}, and it's not the last one.");
-                }
-                else
-                {
-                    // Last item
-                    Console.WriteLine($"Current item is {current}, and it's the last one.");
-                    break;
-                }
-            }
-            while (true);
-        }
-
-             */
+            indent();
+            builder.AppendLine("#endregion Framework");
 
             var macrosNeedingTypes =
                 context.Root.Descendants().Where(m => m.Type == MacroType.ForEach && !m.IsSimpleList())
@@ -308,8 +283,8 @@ namespace Mal.OnyxTemplate
                                 break;
                             case MacroType.ForEach:
                                 indent();
-                                builder.Append("foreach (var item in Get").Append(submacro.SourceName())
-                                    .AppendLine("())");
+                                builder.Append("foreach (var item in ").Append(submacro.SourceName())
+                                    .AppendLine(")");
                                 indent();
                                 builder.AppendLine("{");
                                 indentation++;
@@ -334,7 +309,7 @@ namespace Mal.OnyxTemplate
                                 if (submacro.IsStateField)
                                     builder.Append("state.").Append(submacro.SourceName()).AppendLine(")");
                                 else
-                                    builder.Append("item.Get").Append(submacro.SourceName()).AppendLine("())");
+                                    builder.Append("item.").Append(submacro.SourceName()).AppendLine(")");
                                 indent();
                                 builder.AppendLine("{");
                                 indentation++;
@@ -348,7 +323,7 @@ namespace Mal.OnyxTemplate
                                 if (submacro.IsStateField)
                                     builder.Append("else if (state.").Append(submacro.SourceName()).AppendLine(")");
                                 else
-                                    builder.Append("if (item.Get").Append(submacro.SourceName()).AppendLine("())");
+                                    builder.Append("if (item.").Append(submacro.SourceName()).AppendLine(")");
                                 indent();
                                 builder.AppendLine("{");
                                 indentation++;
@@ -371,7 +346,7 @@ namespace Mal.OnyxTemplate
                             case MacroType.Ref:
                                 writeIndenter(submacro.GenerateIndent(), submacro.ForceIndent());
                                 indent();
-                                builder.Append("builder.Append(item.Get").Append(submacro.SourceName()).AppendLine("());");
+                                builder.Append("builder.Append(item.").Append(submacro.SourceName()).AppendLine(");");
                                 writeIndenter("", submacro.ForceIndent());
                                 break;
                             case MacroType.Next:
@@ -409,15 +384,23 @@ namespace Mal.OnyxTemplate
                             indent();
                             if (submacro.IsSimpleList())
                             {
-                                builder.Append(isPublic ? "public " : "protected ")
-                                    .Append("virtual IEnumerable<string> Get")
-                                    .Append(submacro.SourceName()).AppendLine("() { yield break; }");
+                                builder.Append("IEnumerable<string> ").Append(submacro.FieldName()).AppendLine(";");
+                                indent();
+                                builder.Append(isPublic ? "public " : "protected ").Append("virtual IEnumerable<string> ").Append(submacro.SourceName()).Append(" { get { return ")
+                                    .Append(submacro.FieldName())
+                                    .Append(" ?? Array.Empty<string>(); } set { ")
+                                    .Append(submacro.FieldName())
+                                    .AppendLine(" = value; } }");
                             }
                             else
                             {
-                                builder.Append(isPublic ? "public " : "protected ").Append("virtual IEnumerable<")
-                                    .Append(submacro.ItemTypeName()).Append("> Get")
-                                    .Append(submacro.SourceName()).AppendLine("() { yield break; }");
+                                builder.Append("IEnumerable<").Append(submacro.ItemTypeName()).Append("> ").Append(submacro.FieldName()).AppendLine(";");
+                                indent();
+                                builder.Append(isPublic ? "public " : "protected ").Append("virtual IEnumerable<").Append(submacro.ItemTypeName()).Append("> ").Append(submacro.SourceName()).Append(" { get { return ")
+                                    .Append(submacro.FieldName())
+                                    .Append(" ?? Array.Empty<").Append(submacro.ItemTypeName()).Append(">(); } set { ")
+                                    .Append(submacro.FieldName())
+                                    .AppendLine(" = value; } }");
                             }
 
                             break;
@@ -425,17 +408,15 @@ namespace Mal.OnyxTemplate
                             if (submacro.IsStateField || !generatedMembers.Add(submacro.SourceName()))
                                 break;
                             indent();
-                            builder.Append(isPublic ? "public " : "protected ").Append("virtual string Get")
-                                .Append(submacro.SourceName()).AppendLine("() { return string.Empty; }");
+                            builder.Append(isPublic ? "public " : "protected ").Append("virtual string ").Append(submacro.SourceName()).AppendLine(" { get; set; }");
                             break;
                         case MacroType.If:
                         case MacroType.ElseIf:
                             if (submacro.IsStateField || !generatedMembers.Add(submacro.SourceName()))
                                 break;
                             indent();
-                            builder.Append(isPublic ? "public " : "protected ")
-                                .Append("virtual bool Get")
-                                .Append(submacro.SourceName()).AppendLine("() { return false; }");
+                            builder.Append(isPublic ? "public " : "protected ").Append("virtual bool ").Append(submacro.SourceName()).AppendLine(" { get; set; }");
+
                             break;
                         case MacroType.Else:
                         case MacroType.Text:
@@ -470,8 +451,9 @@ namespace Mal.OnyxTemplate
                                     indent();
                                     if (submacro.IsSimpleList())
                                     {
-                                        builder.Append("foreach (var item in Get").Append(submacro.SourceName())
-                                            .AppendLine("())");
+                                        builder.Append("foreach (var item in ")
+                                            .Append(submacro.SourceName())
+                                            .AppendLine(")");
                                         indent();
                                         builder.AppendLine("{");
                                         indentation++;
@@ -481,7 +463,7 @@ namespace Mal.OnyxTemplate
                                         builder.AppendLine("}");
                                     }
                                     else
-                                        builder.Append("WriteListItem(Get").Append(submacro.SourceName()).Append("(), builder, ").Append("Write").Append(submacro.SourceName()).Append(submacro.Id).AppendLine(");");
+                                        builder.Append("WriteListItem(").Append(submacro.SourceName()).Append(", builder, ").Append("Write").Append(submacro.SourceName()).Append(submacro.Id).AppendLine(");");
 
                                     break;
                                 case MacroType.If:
@@ -489,7 +471,8 @@ namespace Mal.OnyxTemplate
                                     builder.Append("if (");
                                     if (submacro.IsNot)
                                         builder.Append("!");
-                                    builder.Append("Get").Append(submacro.SourceName()).AppendLine("())");
+                                    builder.Append(submacro.SourceName())
+                                        .AppendLine(")");
                                     indent();
                                     builder.AppendLine("{");
                                     indentation++;
@@ -500,7 +483,9 @@ namespace Mal.OnyxTemplate
                                     break;
                                 case MacroType.ElseIf:
                                     indent();
-                                    builder.Append("else if (Get").Append(submacro.SourceName()).AppendLine("())");
+                                    builder.Append("else if (")
+                                        .Append(submacro.SourceName())
+                                        .AppendLine(")");
                                     indent();
                                     builder.AppendLine("{");
                                     indentation++;
@@ -523,8 +508,9 @@ namespace Mal.OnyxTemplate
                                 case MacroType.Ref:
                                     writeIndenter(submacro.GenerateIndent(), submacro.ForceIndent());
                                     indent();
-                                    builder.Append("builder.Append(Get").Append(submacro.SourceName())
-                                        .AppendLine("());");
+                                    builder.Append("builder.Append(")
+                                        .Append(submacro.SourceName())
+                                        .AppendLine(");");
                                     writeIndenter("", submacro.ForceIndent());
                                     break;
                                 case MacroType.Next:
@@ -571,7 +557,7 @@ namespace Mal.OnyxTemplate
             foreach (var macro in combinedTypes)
             {
                 indent();
-                builder.Append("public abstract class ").AppendLine(macro.ItemTypeName());
+                builder.Append("public class ").AppendLine(macro.ItemTypeName());
                 indent();
                 builder.AppendLine("{");
                 indentation++;
@@ -582,7 +568,7 @@ namespace Mal.OnyxTemplate
                 builder.AppendLine("}");
             }
 
-            generateClassContent(context.Root, false);
+            generateClassContent(context.Root, true);
 
             builder.AppendLine("    }");
             builder.AppendLine("}");

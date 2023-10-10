@@ -1,0 +1,38 @@
+using Microsoft.Maui.Controls;
+using Microsoft.Maui.Graphics;
+using System;
+using System.Collections.Immutable;
+using Go.Themes;
+
+namespace {{ namespace }};
+
+/// <summary>
+/// A collection of resources divided by Dark and Light themes. 
+/// </summary>
+public class DesignSystem
+{
+    /// <summary>
+    /// A list of themed <see cref="Color"/>s 
+    /// </summary>
+    public static readonly ImmutableDictionary<string, ThemedItem<Color?>> Colors;
+    
+    /// <summary>
+    /// A list of themed <see cref="Brush"/>es
+    /// </summary>
+    public static readonly ImmutableDictionary<string, ThemedItem<Brush?>> Brushes;
+
+    static DesignSystem()
+    {
+        Colors = ImmutableDictionary.Create<string, ThemedItem<Color?>>(StringComparer.Ordinal)
+{{ $foreach color in colors }}
+{{ $if hasWarning }}
+            #warning {{ warning }}
+{{ $end }}
+            .Add("{{ key }}", new ThemedItem<Color?>(new Color({{ darkR }}, {{ darkG }}, {{ darkB }}), new Color({{ lightR }}, {{ lightG }}, {{ lightB }}))){{ $if $last }};{{ $end }}
+{{ $next }}
+        Brushes = ImmutableDictionary.Create<string, ThemedItem<Brush?>>(StringComparer.Ordinal)
+{{ $foreach color in colors }}
+            .Add("{{ key }}", new ThemedItem<Brush?>(new SolidColorBrush(new Color({{ darkR }}, {{ darkG }}, {{ darkB }})), new SolidColorBrush(new Color({{ lightR }}, {{ lightG }}, {{ lightB }})))){{ $if $last }};{{ $end }}
+{{ $next }}
+    }
+}

@@ -29,9 +29,11 @@ namespace Mal.OnyxTemplate
         /// <param name="reportDiagnostic"></param>
         /// <param name="addSource"></param>
         /// <param name="rootNamespace"></param>
-        public TemplateContext(AdditionalText source, CancellationToken cancellationToken, Action<Diagnostic> reportDiagnostic, Action<string, string> addSource, string rootNamespace)
+        /// <param name="supportsNullable"></param>
+        public TemplateContext(AdditionalText source, CancellationToken cancellationToken, Action<Diagnostic> reportDiagnostic, Action<string, string> addSource, string rootNamespace, bool supportsNullable)
         {
             RootNamespace = rootNamespace;
+            SupportsNullable = supportsNullable;
             _source = source;
             _cancellationToken = cancellationToken;
             _reportDiagnostic = reportDiagnostic;
@@ -43,6 +45,11 @@ namespace Mal.OnyxTemplate
         /// Gets the default namespace of the project the .onyx file resides in.
         /// </summary>
         public string RootNamespace { get; }
+
+        /// <summary>
+        /// Whether the target project supports the nullable state.
+        /// </summary>
+        public bool SupportsNullable { get; }
 
         /// <summary>
         /// The currently scoped macro. <see cref="Add"/> will add macros to this scope.

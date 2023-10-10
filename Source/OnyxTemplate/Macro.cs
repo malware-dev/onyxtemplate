@@ -82,6 +82,7 @@ namespace Mal.OnyxTemplate
         readonly bool _forceIndent;
         string _itemTypeName;
         string _sourceName;
+        string _fieldName;
 
         /// <summary>
         ///     Creates a new <see cref="Macro" />.
@@ -169,12 +170,12 @@ namespace Mal.OnyxTemplate
                 return _itemTypeName;
             if (Parent == null || Parent.Type == MacroType.Root)
             {
-                _itemTypeName = CSharpify(Source) + "ItemBase";
+                _itemTypeName = CSharpify(Source) + "Item";
                 return _itemTypeName;
             }
 
             var builder = new StringBuilder(1024);
-            builder.Append(CSharpify(Source) + "ItemBase");
+            builder.Append(CSharpify(Source) + "Item");
             var macro = Parent;
             while (macro.Type != MacroType.Root)
             {
@@ -196,6 +197,15 @@ namespace Mal.OnyxTemplate
                 return _sourceName;
             _sourceName = CSharpify(Source);
             return _sourceName;
+        }
+
+        public string FieldName()
+        {
+            if (_fieldName != null)
+                return _fieldName;
+            _fieldName = SourceName();
+            _fieldName = $"_{char.ToLowerInvariant(_fieldName[0])}{_fieldName.Substring(1)}";
+            return _fieldName;
         }
 
         /// <summary>

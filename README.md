@@ -234,6 +234,23 @@ by using a specialized set of fields:
 {{ $next}}
 ```
 
+---
+
+## Using the template
+Instantiate your generated template, and fill the properties with the values you need.
+
+```csharp
+var instance = new ThatTemplate();
+instance.Items = new[] 
+{
+    new ThatTemplate.MyListItem() { Value1 = "Hello", Value2 = "World" },
+    new ThatTemplate.MyListItem() { Value1 = "Hei", Value2 = "Verden" },
+    new ThatTemplate.MyListItem() { Value1 = "Hallo", Value2 = "Welt" }
+};
+instance.ATitleOrSomething = "World Greetings";
+
+var result = instance.ToString();
+```
 
 ---
 

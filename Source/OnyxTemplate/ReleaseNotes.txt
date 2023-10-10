@@ -1,4 +1,8 @@
-﻿v.1.1.7-alpha
+﻿v.1.2.0-alpha
+ - Completely changed the way the template is generated and used code wise, to simplify even further.
+ - Should now support environments with nullable support a little better.
+
+v.1.1.7-alpha
  - Learned how to include release notes!
 
 v.1.1.6-alpha

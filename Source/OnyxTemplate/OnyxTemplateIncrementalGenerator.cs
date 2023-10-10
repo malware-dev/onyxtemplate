@@ -21,20 +21,31 @@ namespace Mal.OnyxTemplate
         /// <param name="context">The <see cref="T:Microsoft.CodeAnalysis.IncrementalGeneratorInitializationContext" /> to register callbacks on</param>
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
-            var onyxFilesProvider = context.AdditionalTextsProvider.Where(text => string.Equals(Path.GetExtension(text.Path), ".onyx", StringComparison.InvariantCultureIgnoreCase))
+            var onyxFilesProvider = context.AdditionalTextsProvider
+                .Where(text => string.Equals(Path.GetExtension(text.Path), ".onyx", StringComparison.InvariantCultureIgnoreCase))
                 .Combine(context.AnalyzerConfigOptionsProvider.Select((options, _) =>
                 {
                     options.GlobalOptions.TryGetValue("build_property.RootNamespace", out var rootNamespace);
                     return rootNamespace ?? "OnyxTemplate";
-                }));
+                })
+                .Combine(context.CompilationProvider.Select((compilation, _) => compilation.Options.NullableContextOptions != NullableContextOptions.Disable)));
 
             context.RegisterSourceOutput(onyxFilesProvider, GenerateOnyxSource);
+            //
+            // var onyxFilesProvider = context.AdditionalTextsProvider.Where(text => string.Equals(Path.GetExtension(text.Path), ".onyx", StringComparison.InvariantCultureIgnoreCase))
+            //     .Combine(context.AnalyzerConfigOptionsProvider.Select((options, _) =>
+            //     {
+            //         options.GlobalOptions.TryGetValue("build_property.RootNamespace", out var rootNamespace);
+            //         return rootNamespace ?? "OnyxTemplate";
+            //     }));
+            //
+            // context.RegisterSourceOutput(onyxFilesProvider, GenerateOnyxSource);
         }
 
-        static void GenerateOnyxSource(SourceProductionContext context, (AdditionalText sourceText, string rootNamespace) pair)
+        static void GenerateOnyxSource(SourceProductionContext context, (AdditionalText sourceText, (string rootNamespace, bool supportsNullable) Right) info)
         {
-            var (sourceText, rootNamespace) = pair;
-            var templateContext = new TemplateContext(sourceText, context.CancellationToken, context.ReportDiagnostic, context.AddSource, rootNamespace);
+            var (sourceText, (rootNamespace, supportsNullable)) = info;
+            var templateContext = new TemplateContext(sourceText, context.CancellationToken, context.ReportDiagnostic, context.AddSource, rootNamespace, supportsNullable);
             OnyxProducer.GenerateOnyxSource(templateContext, sourceText);
         }
     }
