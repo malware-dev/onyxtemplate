@@ -21,21 +21,8 @@ Let's create our first .onyx file. Let's call it `WelcomeText.onyx`.
 Hello, {{ UserName }}, welcome to the show.
 ```
 
-The source generator will have generated a base class for you to derive from. Create a
-new `.cs` file in the same folder, named `WelcomeText.onyx.cs` (or whatever you want,
-it's just useful to group them together).
-
-```csharp
-class WelcomeText: WelcomeTextBase
-{
-    protected override string GetUserName()
-    {
-        return "Batman";
-    }
-}
-```
-Every macro you make in your .onyx file will get its own Get method you can override
-to provide the replacement string for that macro.
+The source generator will have generated a class for you. Every macro you make in your .onyx file will get its own 
+property string (or boolean) you can set for that macro.
 
 ---
 
@@ -63,15 +50,12 @@ Animals:
 ```
 Providing we give it the following data provider:
 ```csharp
-class AnimalList: AnimalListBase
-{
-    protected override IEnumerable<string> GetAnimals()
-    {
-        yield return "Dog";
-        yield return "Cat";
-        yield return "Tiger";
-        yield return "Bear";
-    }
+var template = new Template();
+template.Animals = new[] {
+    "Dog",
+    "Cat",
+    "Tiger",
+    "Bear"
 }
 ```
 The result will be
@@ -90,15 +74,12 @@ _See also [item state conditionals](#item-state-conditionals)_
 ## Dealing with multiline macros
 But what if the `animal` macro returned multiple lines? Let's try it:
 ```csharp
-class AnimalList: AnimalListBase
-{
-    protected override IEnumerable<string> GetAnimals()
-    {
-        yield return "Dog\n- Canidae";
-        yield return "Cat\n- Felidae";
-        yield return "Tiger\n- Felidae";
-        yield return "Bear\n- Ursidae";
-    }
+var template = new Template();
+template.Animals = new[] {
+    "Dog\n- Canidae",
+    "Cat\n- Felidae",
+    "Tiger\n- Felidae",
+    "Bear\n- Ursidae"
 }
 ```
 Result:
@@ -157,36 +138,17 @@ Animals:
 Now this is detected to be a complex macro. This means we'll have to change our
 data provider again:
 ```csharp
-class AnimalList: AnimalListBase
+var template = new Template();
+template.Animals = new[] 
 {
-    class Animal : AnimalsItemBase
-    {
-        readonly string _name;
-        readonly string _type;
-
-        public Animal(string name, string type)
-        {
-            _name = name;
-            _type = type;
-        }
-
-        public override string GetName() => _name;
-        public override string GetType() => _type;
-    }
-    
-    protected override IEnumerable<AnimalsItemBase> GetAnimals()
-    {
-        yield return new Animal("Dog", "Canidae");
-        yield return new Animal("Cat", "Felidae");
-        yield return new Animal("Tiger", "Felidae");
-        yield return new Animal("Bear", "Felidae");
-    }
+    new Template.Animal { Name = "Dog", Type = "Canidae" },
+    new Template.Animal { Name = "Cat", Type = "Felidae" },
+    new Template.Animal { Name = "Tiger", Type = "Felidae" },
+    new Template.Animal { Name = "Bear", Type = "Ursidae" }
 }
 ```
-The generator has produced an item base class we can derive from to
-produce data for the complex macro. So we make an `Animal` class, which
-derives from the generated `AnimalsItemBase` class, and our `GetAnimals()`
-class is changed to return a set of those instead of a simple string.
+The generator has produced an item class we can use to produce data for the complex 
+macro.
 
 Now, our results are:
 ```
@@ -232,24 +194,6 @@ by using a specialized set of fields:
 {{ $foreach item in list }}
     item.name{{ $if not $last }},{{ $end }}
 {{ $next}}
-```
-
----
-
-## Using the template
-Instantiate your generated template, and fill the properties with the values you need.
-
-```csharp
-var instance = new ThatTemplate();
-instance.Items = new[] 
-{
-    new ThatTemplate.MyListItem() { Value1 = "Hello", Value2 = "World" },
-    new ThatTemplate.MyListItem() { Value1 = "Hei", Value2 = "Verden" },
-    new ThatTemplate.MyListItem() { Value1 = "Hallo", Value2 = "Welt" }
-};
-instance.ATitleOrSomething = "World Greetings";
-
-var result = instance.ToString();
 ```
 
 ---
