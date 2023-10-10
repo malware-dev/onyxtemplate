@@ -164,7 +164,7 @@ Animals:
    Animal Family: Felidae
    
    Animal Name:   Bear
-   Animal Family: Felidae
+   Animal Family: Ursidae
 
 ```
 ---
