@@ -70,6 +70,7 @@ namespace Mal.OnyxTemplate
             //     "#pragma warning disable CS8618 // Non-nullable property '{0}' must contain a non-null value when exiting constructor..");
             if (context.SupportsNullable)
                 builder.AppendLine("#nullable disable");
+            builder.AppendLine("using System;");
             builder.AppendLine("using System.Text;");
             builder.AppendLine("using System.Collections.Generic;");
             builder.AppendLine();
