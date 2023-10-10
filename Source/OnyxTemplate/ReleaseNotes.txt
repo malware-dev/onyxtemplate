@@ -1,5 +1,5 @@
 ﻿v.1.2.0-alpha
- - Completely changed the way the template is generated and used code wise, to simplify even further.
+ - BREAKING CHANGE: Completely changed the way the template is generated and used code wise, to simplify even further.
  - Should now support environments with nullable support a little better.
 
 v.1.1.7-alpha
