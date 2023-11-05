@@ -7,7 +7,7 @@ Onyx Template is a very simple Source Generator powered runtime text template sy
 
 ---
 ## Usage:
-1. Add the nuget package.
+1. Add the nuget package Mal.OnyxTemplate.
 2. Add a file with an `.onyx` extension.  
    (It _should_ be added automatically as AdditionalFiles. If not - change it to that).
 
