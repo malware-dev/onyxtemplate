@@ -1,0 +1,4 @@
+﻿Onyx Template is a very simple Source Generator powered runtime text template system.
+
+- Note: Only really tested with modern project format + modern nuget. No guarantees of  
+  proper function in old .NET Framework projects etc.

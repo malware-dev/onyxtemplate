@@ -6,9 +6,9 @@
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
         <IsRoslynComponent>True</IsRoslynComponent>
         <IncludeBuildOutput>false</IncludeBuildOutput>
-        <Version>1.2.1-alpha</Version>
+        <Version>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/PackageVersion.txt"))</Version>
         <Title>Onyx Template</Title>
-        <Description>Simple runtime template generator. PackageReference format only.</Description>
+        <Description>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/Description.txt"))</Description>
         <Copyright>2023 Morten Aune Lyrstad</Copyright>
         <PackageIcon>malware256.png</PackageIcon>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
