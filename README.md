@@ -1,5 +1,7 @@
 # Onyx Template
 
+[![Build and Deploy](https://github.com/malware-dev/onyxtemplate/actions/workflows/deploynuget.yml/badge.svg?branch=main)](https://github.com/malware-dev/onyxtemplate/actions/workflows/deploynuget.yml)
+
 Onyx Template is a very simple Source Generator powered runtime text template system.
 
 - Note: Only really tested with modern project format + modern nuget. No guarantees of  
