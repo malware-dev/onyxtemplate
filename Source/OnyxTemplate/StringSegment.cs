@@ -10,14 +10,14 @@ namespace Mal.OnyxTemplate
     /// <summary>
     /// A segment of a string.
     /// </summary>
-    struct StringSegment
+    readonly struct StringSegment
     {
         static readonly char[] NewlineChars = { '\r', '\n' };
 
         public readonly string Text;
         public readonly int Start;
         public readonly int Length;
-        string _cache;
+        // string _cache;
 
         /// <summary>
         /// Creates a new <see cref="StringSegment"/> representing a full string.
@@ -26,7 +26,7 @@ namespace Mal.OnyxTemplate
         public StringSegment(string text)
             : this(text, 0, text.Length)
         {
-            _cache = text;
+            // _cache = text;
         }
 
         /// <summary>
@@ -40,7 +40,7 @@ namespace Mal.OnyxTemplate
             Text = text;
             Start = start;
             Length = Math.Max(0, length);
-            _cache = null;
+            // _cache = null;
         }
 
         /// <summary>
@@ -55,10 +55,10 @@ namespace Mal.OnyxTemplate
         /// </summary>
         public bool IsEmpty => Text == null;
 
-        /// <summary>
-        /// Determines whether this segment has been cached into its own separate string.
-        /// </summary>
-        public bool IsCached => _cache != null;
+        // /// <summary>
+        // /// Determines whether this segment has been cached into its own separate string.
+        // /// </summary>
+        // public bool IsCached => _cache != null;
 
         /// <summary>
         /// Returns the character at the relative index.
@@ -143,7 +143,7 @@ namespace Mal.OnyxTemplate
         {
             if (Length == 0)
                 return "";
-            return _cache ?? (_cache = Text.Substring(Start, Length));
+            return /*_cache ?? (_cache = */Text.Substring(Start, Length);
         }
 
         /// <summary>

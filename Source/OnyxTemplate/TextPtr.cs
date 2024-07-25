@@ -162,7 +162,7 @@ namespace Mal.OnyxTemplate
             var index = Index;
             if (stopOnNewLine)
             {
-                while (index < Text.Length && !IsNewLine(Text, index) && Text[index] != '\n' && char.IsWhiteSpace(Text[index]))
+                while (index < Text.Length && !IsNewLine(Text, index) && char.IsWhiteSpace(Text[index]))
                     index++;
             }
             else
@@ -188,6 +188,13 @@ namespace Mal.OnyxTemplate
         }
 
         /// <summary>
+        ///     Skips a number of characters.
+        /// </summary>
+        /// <param name="numberOfCharacters"></param>
+        /// <returns></returns>
+        public TextPtr Skip(int numberOfCharacters) => this + numberOfCharacters;
+
+        /// <summary>
         ///     Returns a pointer which is located where one of the provided characters can be found. Returns a pointer that is
         ///     <see cref="IsPastEnd" /> if nothing is found.
         /// </summary>
@@ -202,7 +209,7 @@ namespace Mal.OnyxTemplate
         }
 
         /// <summary>
-        /// Attempts to find the given pattern, but only within the current line of the text (stops at newline).
+        ///     Attempts to find the given pattern, but only within the current line of the text (stops at newline).
         /// </summary>
         /// <param name="pattern"></param>
         /// <returns></returns>
@@ -219,13 +226,15 @@ namespace Mal.OnyxTemplate
 
             return new TextPtr(Text, Text.Length);
         }
-        
+
         /// <summary>
         ///     Takes a string segment from the location of this pointer, to the location of another.
         /// </summary>
         /// <param name="end"></param>
         /// <returns></returns>
         public StringSegment TakeUntil(TextPtr end) => new StringSegment(Text, Index, end.Index - Index);
+
+        public StringSegment Take(int charCount) => new StringSegment(Text, Index, charCount);
 
         /// <summary>
         ///     Takes a string segment from the location of this pointer to the end of the origin string.
@@ -287,6 +296,24 @@ namespace Mal.OnyxTemplate
             return true;
         }
 
+        public bool StartsWithWord(string text, bool caseInsensitive = false)
+        {
+            if (!StartsWith(text, caseInsensitive))
+                return false;
+            if (!(this + text.Length).IsWordBreak())
+                return false;
+            return true;
+        }
+
+        public bool IsWordBreak()
+        {
+            if (IsPastEnd())
+                return true;
+            var a = (this - 1).IsWordCharacter();
+            var b = IsWordCharacter();
+            return a != b;
+        }
+
         /// <summary>
         ///     Attempts to find the given substring.
         /// </summary>
@@ -313,8 +340,9 @@ namespace Mal.OnyxTemplate
         }
 
         /// <summary>
-        /// Determines whether this pointer is currently situated at the end of a line, meaning either at the end of the string,
-        /// or directly ahead of a newline.
+        ///     Determines whether this pointer is currently situated at the end of a line, meaning either at the end of the
+        ///     string,
+        ///     or directly ahead of a newline.
         /// </summary>
         /// <returns></returns>
         public bool IsAtEndOfLine()
@@ -360,7 +388,7 @@ namespace Mal.OnyxTemplate
         }
 
         /// <summary>
-        /// Gets the current position in a '(ln, ch)' format.
+        ///     Gets the current position in a '(ln, ch)' format.
         /// </summary>
         /// <returns></returns>
         public override string ToString()
@@ -377,7 +405,7 @@ namespace Mal.OnyxTemplate
                 return false;
             if (text[index] == '\n')
                 return true;
-            if (index + 1 >= text.Length)
+            if (index >= text.Length)
                 return true;
             if (text[index] == '\r' && text[index + 1] == '\n')
                 return true;
@@ -422,7 +450,28 @@ namespace Mal.OnyxTemplate
                         break;
                 }
             }
+
             return builder.ToString();
+        }
+
+        public bool IsWhitespace(bool ignoreNewLine)
+        {
+            if (ignoreNewLine && IsNewLine())
+                return false;
+            return char.IsWhiteSpace(Char);
+        }
+
+        public bool IsStartOfWord() => char.IsLetter(Char) || Char == '_';
+
+        public bool IsWordCharacter() => char.IsLetterOrDigit(Char) || Char == '_';
+
+        public StringSegment TakeWhile(Func<TextPtr, bool> predicate)
+        {
+            var start = Index;
+            var end = Index;
+            while (end < Text.Length && predicate(new TextPtr(Text, end))) end++;
+
+            return new StringSegment(Text, start, end - start);
         }
     }
 }
