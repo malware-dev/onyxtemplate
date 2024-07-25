@@ -194,7 +194,7 @@ by using a specialized set of fields:
 
 ```
 {{ $foreach item in list }}
-    item.name{{ $if not $last }},{{ $end }}
+    {{ item }}{{ $if not $last }},{{ $end }}
 {{ $next}}
 ```
 
