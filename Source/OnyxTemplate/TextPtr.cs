@@ -13,7 +13,7 @@ namespace Mal.OnyxTemplate
     ///     Points to a specific location within a text string.
     /// </summary>
     [DebuggerDisplay("{ToDebugString(),nq}")]
-    readonly struct TextPtr
+    public readonly struct TextPtr
     {
         /// <summary>
         ///     Advances the pointer by one.
@@ -472,6 +472,36 @@ namespace Mal.OnyxTemplate
             while (end < Text.Length && predicate(new TextPtr(Text, end))) end++;
 
             return new StringSegment(Text, start, end - start);
+        }
+
+        public LineInfo GetLineInfo()
+        {
+            var line = 1;
+            var @char = 1;
+            for (var i = 0; i < Index; i++)
+            {
+                if (Text[i] == '\n')
+                {
+                    line++;
+                    @char = 1;
+                }
+                else
+                    @char++;
+            }
+
+            return new LineInfo(line, @char);
+        }
+    }
+    
+    public readonly struct LineInfo
+    {
+        public readonly int Line;
+        public readonly int Char;
+
+        public LineInfo(int line, int @char)
+        {
+            Line = line;
+            Char = @char;
         }
     }
 }

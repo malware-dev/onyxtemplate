@@ -21,6 +21,7 @@ namespace Mal.OnyxTemplate.DocumentModel
         Last,
         Middle,
         Odd,
-        Even
+        Even,
+        String
     }
 }

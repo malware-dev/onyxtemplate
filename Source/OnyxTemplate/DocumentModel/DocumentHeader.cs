@@ -7,9 +7,11 @@ namespace Mal.OnyxTemplate.DocumentModel
         readonly bool _isDefined;
         public readonly bool Indent;
         public readonly bool PublicVisibility;
+        public readonly string Description;
 
-        public DocumentHeader(bool indent, bool publicVisibility)
+        public DocumentHeader(bool indent, bool publicVisibility, string description)
         {
+            Description = description;
             _isDefined = true;
             Indent = indent;
             PublicVisibility = publicVisibility;

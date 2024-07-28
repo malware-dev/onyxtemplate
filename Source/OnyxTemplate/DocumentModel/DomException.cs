@@ -8,6 +8,13 @@ namespace Mal.OnyxTemplate.DocumentModel
 {
     public class DomException : Exception
     {
-        internal DomException(TextPtr ptr, string message) : base(message) { }
+        public TextPtr Ptr { get; }
+        public int Length { get; }
+
+        public DomException(TextPtr ptr, int length, string message) : base(message)
+        {
+            Ptr = ptr;
+            Length = length;
+        }
     }
 }

@@ -1,4 +1,8 @@
-﻿v.1.2.1-alpha
+﻿v.1.3.0-alpha
+ - Complete rewrite of the generator to handle _so_ many bugs...
+ - Breaking change: Lists are no longer IEnumerable, they are now IReadOnlyList to support indexing and count without evaluating the list multiple times.
+
+v.1.2.1-alpha
  - Missing a using...
 
 v.1.2.0-alpha

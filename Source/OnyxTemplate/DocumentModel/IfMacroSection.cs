@@ -1,4 +1,6 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Text;
 
 namespace Mal.OnyxTemplate.DocumentModel
@@ -27,6 +29,16 @@ namespace Mal.OnyxTemplate.DocumentModel
             foreach (var block in Blocks)
                 sb.Append(block);
             return sb.ToString();
+        }
+
+        public override IEnumerable<DocumentBlock> Descendants()
+        {
+            foreach (var block in Blocks)
+            {
+                yield return block;
+                foreach (var subBlock in block.Descendants())
+                    yield return subBlock;
+            }
         }
     }
 }

@@ -10,7 +10,7 @@ namespace Mal.OnyxTemplate
     /// <summary>
     /// A segment of a string.
     /// </summary>
-    readonly struct StringSegment
+    public readonly struct StringSegment
     {
         static readonly char[] NewlineChars = { '\r', '\n' };
 

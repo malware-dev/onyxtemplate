@@ -27,9 +27,9 @@ public class DocumentConditionalMacroTests
         block0.IfSections.Should().HaveCount(1);
         block0.ElseSection.Should().BeNull();
         var ifSection = block0.IfSections[0].Should().BeOfType<IfMacroSection>().Subject;
-        ifSection.Field.Name.Should().Be("condition");
+        ifSection.Field.Name.ToString().Should().Be("condition");
         ifSection.Blocks.Should().HaveCount(1);
-        ifSection.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.Should().Be("Hello, World!\r\n");
+        ifSection.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.ToString().Should().Be("Hello, World!\r\n");
     }
     
     [Test]
@@ -43,9 +43,9 @@ public class DocumentConditionalMacroTests
         block0.IfSections.Should().HaveCount(1);
         block0.ElseSection.Should().BeNull();
         var ifSection = block0.IfSections[0].Should().BeOfType<IfMacroSection>().Subject;
-        ifSection.Field.Name.Should().Be("condition");
+        ifSection.Field.Name.ToString().Should().Be("condition");
         ifSection.Blocks.Should().HaveCount(1);
-        ifSection.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.Should().Be("Hello, World!");
+        ifSection.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.ToString().Should().Be("Hello, World!");
     }
     
      [Test]
@@ -66,11 +66,11 @@ public class DocumentConditionalMacroTests
          block0.IfSections.Should().HaveCount(1);
          block0.ElseSection.Should().NotBeNull();
          var ifSection = block0.IfSections[0].Should().BeOfType<IfMacroSection>().Subject;
-         ifSection.Field.Name.Should().Be("condition");
+         ifSection.Field.Name.ToString().Should().Be("condition");
          ifSection.Blocks.Should().HaveCount(1);
-         ifSection.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.Should().Be("Hello, World!\r\n");
+         ifSection.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.ToString().Should().Be("Hello, World!\r\n");
          block0.ElseSection.Blocks.Should().HaveCount(1);
-         block0.ElseSection.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.Should().Be("Goodbye, World!\r\n");
+         block0.ElseSection.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.ToString().Should().Be("Goodbye, World!\r\n");
      }
      
      [Test]
@@ -84,11 +84,11 @@ public class DocumentConditionalMacroTests
          block0.IfSections.Should().HaveCount(1);
          block0.ElseSection.Should().NotBeNull();
          var ifSection = block0.IfSections[0].Should().BeOfType<IfMacroSection>().Subject;
-         ifSection.Field.Name.Should().Be("condition");
+         ifSection.Field.Name.ToString().Should().Be("condition");
          ifSection.Blocks.Should().HaveCount(1);
-         ifSection.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.Should().Be("Hello, World!");
+         ifSection.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.ToString().Should().Be("Hello, World!");
          block0.ElseSection.Blocks.Should().HaveCount(1);
-         block0.ElseSection.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.Should().Be("Goodbye, World!");
+         block0.ElseSection.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.ToString().Should().Be("Goodbye, World!");
      }
      
      [Test]
@@ -109,13 +109,13 @@ public class DocumentConditionalMacroTests
          block0.IfSections.Should().HaveCount(2);
          block0.ElseSection.Should().BeNull();
          var ifSection1 = block0.IfSections[0].Should().BeOfType<IfMacroSection>().Subject;
-         ifSection1.Field.Name.Should().Be("condition1");
+         ifSection1.Field.Name.ToString().Should().Be("condition1");
          ifSection1.Blocks.Should().HaveCount(1);
-         ifSection1.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.Should().Be("Hello, World!\r\n");
+         ifSection1.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.ToString().Should().Be("Hello, World!\r\n");
          var ifSection2 = block0.IfSections[1].Should().BeOfType<IfMacroSection>().Subject;
-         ifSection2.Field.Name.Should().Be("condition2");
+         ifSection2.Field.Name.ToString().Should().Be("condition2");
          ifSection2.Blocks.Should().HaveCount(1);
-         ifSection2.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.Should().Be("Goodbye, World!\r\n");
+         ifSection2.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.ToString().Should().Be("Goodbye, World!\r\n");
      }
      
       [Test]
@@ -129,13 +129,13 @@ public class DocumentConditionalMacroTests
           block0.IfSections.Should().HaveCount(2);
           block0.ElseSection.Should().BeNull();
           var ifSection1 = block0.IfSections[0].Should().BeOfType<IfMacroSection>().Subject;
-          ifSection1.Field.Name.Should().Be("condition1");
+          ifSection1.Field.Name.ToString().Should().Be("condition1");
           ifSection1.Blocks.Should().HaveCount(1);
-          ifSection1.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.Should().Be("Hello, World!");
+          ifSection1.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.ToString().Should().Be("Hello, World!");
           var ifSection2 = block0.IfSections[1].Should().BeOfType<IfMacroSection>().Subject;
-          ifSection2.Field.Name.Should().Be("condition2");
+          ifSection2.Field.Name.ToString().Should().Be("condition2");
           ifSection2.Blocks.Should().HaveCount(1);
-          ifSection2.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.Should().Be("Goodbye, World!");
+          ifSection2.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.ToString().Should().Be("Goodbye, World!");
       }
       
       [Test]
@@ -158,15 +158,15 @@ public class DocumentConditionalMacroTests
           block0.IfSections.Should().HaveCount(2);
           block0.ElseSection.Should().NotBeNull();
           var ifSection1 = block0.IfSections[0].Should().BeOfType<IfMacroSection>().Subject;
-          ifSection1.Field.Name.Should().Be("condition1");
+          ifSection1.Field.Name.ToString().Should().Be("condition1");
           ifSection1.Blocks.Should().HaveCount(1);
-          ifSection1.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.Should().Be("Hello, World!\r\n");
+          ifSection1.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.ToString().Should().Be("Hello, World!\r\n");
           var ifSection2 = block0.IfSections[1].Should().BeOfType<IfMacroSection>().Subject;
-          ifSection2.Field.Name.Should().Be("condition2");
+          ifSection2.Field.Name.ToString().Should().Be("condition2");
           ifSection2.Blocks.Should().HaveCount(1);
-          ifSection2.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.Should().Be("Goodbye, World!\r\n");
+          ifSection2.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.ToString().Should().Be("Goodbye, World!\r\n");
           block0.ElseSection.Blocks.Should().HaveCount(1);
-          block0.ElseSection.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.Should().Be("Farewell, World!\r\n");
+          block0.ElseSection.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.ToString().Should().Be("Farewell, World!\r\n");
       }
       
       [Test]
@@ -180,14 +180,14 @@ public class DocumentConditionalMacroTests
           block0.IfSections.Should().HaveCount(2);
           block0.ElseSection.Should().NotBeNull();
           var ifSection1 = block0.IfSections[0].Should().BeOfType<IfMacroSection>().Subject;
-          ifSection1.Field.Name.Should().Be("condition1");
+          ifSection1.Field.Name.ToString().Should().Be("condition1");
           ifSection1.Blocks.Should().HaveCount(1);
-          ifSection1.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.Should().Be("Hello, World!");
+          ifSection1.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.ToString().Should().Be("Hello, World!");
           var ifSection2 = block0.IfSections[1].Should().BeOfType<IfMacroSection>().Subject;
-          ifSection2.Field.Name.Should().Be("condition2");
+          ifSection2.Field.Name.ToString().Should().Be("condition2");
           ifSection2.Blocks.Should().HaveCount(1);
-          ifSection2.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.Should().Be("Goodbye, World!");
+          ifSection2.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.ToString().Should().Be("Goodbye, World!");
           block0.ElseSection.Blocks.Should().HaveCount(1);
-          block0.ElseSection.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.Should().Be("Farewell, World!");
+          block0.ElseSection.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.ToString().Should().Be("Farewell, World!");
       }
 }

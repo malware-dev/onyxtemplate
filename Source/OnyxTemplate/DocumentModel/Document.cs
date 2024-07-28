@@ -4,11 +4,15 @@
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
+using System.Text;
 
 namespace Mal.OnyxTemplate.DocumentModel
 {
     public class Document
     {
+        TemplateTypeDescriptor _typeDescriptor;
+
         Document(DocumentHeader header, ImmutableArray<DocumentBlock> blocks)
         {
             Header = header;
@@ -16,8 +20,145 @@ namespace Mal.OnyxTemplate.DocumentModel
         }
 
         public ImmutableArray<DocumentBlock> Blocks { get; }
-
+        
         public DocumentHeader Header { get; }
+        
+        public IEnumerable<DocumentBlock> Descendants()
+        {
+            foreach (var block in Blocks)
+            {
+                yield return block;
+                foreach (var subBlock in block.Descendants())
+                    yield return subBlock;
+            }
+        }
+
+        /// <summary>
+        ///     Converts an input string to a C# identifier.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="camelCase">Produce camelCase rather than PascalCase.</param>
+        /// <returns></returns>
+        public static string CSharpify(string input, bool camelCase = false)
+        {
+            if (string.IsNullOrEmpty(input))
+                return "_";
+
+            var buffer = new StringBuilder();
+            var firstChar = input[0];
+
+            if (camelCase)
+                buffer.Append(char.IsDigit(firstChar) ? '_' : char.ToLower(firstChar));
+            else
+                buffer.Append(char.IsDigit(firstChar) ? '_' : char.ToUpper(firstChar));
+
+            for (var i = 1; i < input.Length; i++)
+            {
+                var c = input[i];
+
+                if (char.IsLetterOrDigit(c))
+                    buffer.Append(c);
+                else
+                {
+                    switch (c)
+                    {
+                        case 'æ':
+                            buffer.Append("ae");
+                            break;
+                        case 'ø':
+                            buffer.Append("oe");
+                            break;
+                        case 'å':
+                            buffer.Append("aa");
+                            break;
+                        case 'ü':
+                            buffer.Append("ue");
+                            break;
+                        case 'ö':
+                            buffer.Append("oe");
+                            break;
+                        case 'ä':
+                            buffer.Append("ae");
+                            break;
+                        case 'ß':
+                            buffer.Append("ss");
+                            break;
+                        default:
+                            buffer.Append('_');
+                            break;
+                    }
+                }
+            }
+
+            return buffer.ToString();
+        }
+
+        public TemplateTypeDescriptor ToTemplateTypeDescriptor()
+        {
+            if (_typeDescriptor != null)
+                return _typeDescriptor;
+
+            var descriptor = new TemplateTypeDescriptor.Builder();
+
+            ScanThisScope(descriptor, Blocks);
+
+            _typeDescriptor = descriptor.Build();
+            return _typeDescriptor;
+        }
+
+        static void ScanThisScope(TemplateTypeDescriptor.Builder descriptor, IReadOnlyList<DocumentBlock> blocks)
+        {
+            var mySimpleMacros = blocks.OfType<SimpleMacroBlock>();
+            foreach (var simpleMacro in mySimpleMacros)
+            {
+                var builder = descriptor.Up(simpleMacro.Field.Up);
+                if (builder == null)
+                    throw new DomException(simpleMacro.Field.Source, simpleMacro.Field.Name.Length, "Invalid field reference.");
+                builder.WithField(simpleMacro.Field.Name.ToString(), TemplateFieldType.String);
+            }
+
+            var conditionalMacros = blocks.OfType<ConditionalMacro>();
+            foreach (var conditional in conditionalMacros)
+            {
+                foreach (var section in conditional.IfSections)
+                {
+                    var builder = descriptor.Up(section.Field.Up);
+                    if (builder == null)
+                        throw new DomException(section.Field.Source, section.Field.Name.Length, "Invalid field reference.");
+                    builder.WithField(section.Field.Name.ToString(), TemplateFieldType.Boolean);
+
+                    ScanThisScope(descriptor, section.Blocks);
+                }
+
+                if (conditional.ElseSection != null)
+                    ScanThisScope(descriptor, conditional.ElseSection.Blocks);
+            }
+
+            var loopMacros = blocks.OfType<ForEachMacroBlock>();
+            foreach (var loop in loopMacros)
+            {
+                var builder = descriptor.Up(loop.Collection.Up);
+                if (builder == null)
+                    throw new DomException(loop.Collection.Source, loop.Collection.Name.Length, "Invalid field reference.");
+                builder.WithField(loop.Collection.Name.ToString(),
+                    TemplateFieldType.String,
+                    p =>
+                    {
+                        p.AsCollection();
+                        // If this loop only ever reference a single field which is the loop variable,
+                        // this is a simple collection of strings.
+                        if (loop.Blocks.All(b => b is TextBlock || b is SimpleMacroBlock sm && sm.Field.Up == 0 && sm.Field.Name.EqualsIgnoreCase(loop.Variable)))
+                            return;
+
+                        var complexTypeName = loop.Variable + "Item";
+                        var complexType = new TemplateTypeDescriptor.Builder(descriptor)
+                            .WithName(complexTypeName);
+                        ScanThisScope(complexType, loop.Blocks);
+                        builder.WithComplexType(complexType);
+                        p.WithType(complexTypeName);
+                    });
+            }
+        }
 
         public static Document Parse(string source)
         {
@@ -25,7 +166,7 @@ namespace Mal.OnyxTemplate.DocumentModel
             var ptr = new TextPtr(source);
             TryReadHeader(ref ptr, out var header);
             if (ReadBlocks(ref ptr, blocks) != null)
-                throw new DomException(ptr, "Unexpected token.");
+                throw new DomException(ptr, 1, "Unexpected token.");
             return new Document(header, blocks.ToImmutable());
         }
 
@@ -36,7 +177,7 @@ namespace Mal.OnyxTemplate.DocumentModel
             void flushTextBlock(in TextPtr here)
             {
                 if (start.Index >= here.Index) return;
-                blocks.Add(new TextBlock(start.TakeUntil(here).ToString()));
+                blocks.Add(new TextBlock(start.TakeUntil(here)));
                 start = here;
             }
 
@@ -70,7 +211,7 @@ namespace Mal.OnyxTemplate.DocumentModel
                         blocks.Add(conditional);
                         continue;
                     }
-                    
+
                     if (TryReadForEach(macro, ref ptr, out var loop))
                     {
                         flushTextBlock(end);
@@ -86,7 +227,7 @@ namespace Mal.OnyxTemplate.DocumentModel
             flushTextBlock(ptr);
             return null;
         }
-        
+
         static bool TryReadForEach(IntermediateMacro macro, ref TextPtr ptr, out DocumentBlock loop)
         {
             var end = ptr;
@@ -98,23 +239,23 @@ namespace Mal.OnyxTemplate.DocumentModel
 
             var tptr = new TokenPtr(macro) + 1;
             if (!tptr.IsKind(TokenKind.Word))
-                throw new DomException(tptr.TextPtr, "Expected variable name.");
+                throw new DomException(tptr.TextPtr, tptr.Current.Image.Length, "Expected variable name.");
             var variable = tptr.Current.Image;
             tptr++;
 
             if (!tptr.IsKind(TokenKind.Word) || !tptr.Current.Image.EqualsIgnoreCase(Keywords.In))
-                throw new DomException(tptr.TextPtr, "Expected 'in' keyword.");
+                throw new DomException(tptr.TextPtr, tptr.Current.Image.Length, "Expected 'in' keyword.");
 
             tptr++;
             if (!TryReadFieldReference(ref tptr, out var collection))
-                throw new DomException(tptr.TextPtr, "Expected field reference.");
+                throw new DomException(tptr.TextPtr, tptr.Current.Image.Length, "Expected field reference.");
 
             var blocks = ImmutableArray.CreateBuilder<DocumentBlock>();
             macro = ReadBlocks(ref end, blocks);
             if (!macro.IsKind(TokenKind.Next))
-                throw new DomException(end, "Expected \"next\" token.");
+                throw new DomException(end, 1, "Expected \"next\" token.");
 
-            loop = new ForEachMacroBlock(variable.ToString(), collection, blocks.ToImmutable());
+            loop = new ForEachMacroBlock(variable, collection, blocks.ToImmutable());
             ptr = end;
             return true;
         }
@@ -137,9 +278,9 @@ namespace Mal.OnyxTemplate.DocumentModel
             }
 
             if (!TryReadFieldReference(ref tptr, out var field))
-                throw new DomException(tptr.TextPtr, "Expected field reference.");
+                throw new DomException(tptr.TextPtr, tptr.Current.Image.Length, "Expected field reference.");
 
-            var conditionals = new List<ConditionalMacroSection>();
+            var conditionals = new List<IfMacroSection>();
             var kind = macro.Kind;
             while (true)
             {
@@ -149,7 +290,7 @@ namespace Mal.OnyxTemplate.DocumentModel
                 {
                     case TokenKind.ElseIf:
                         if (kind == TokenKind.Else)
-                            throw new DomException(end, "Else block must be last in a conditional block.");
+                            throw new DomException(end, 1, "Else block must be last in a conditional block.");
                         conditionals.Add(new IfMacroSection(isNot, field, blocks.ToImmutable()));
 
                         tptr = new TokenPtr(macro) + 1;
@@ -161,12 +302,12 @@ namespace Mal.OnyxTemplate.DocumentModel
                         }
 
                         if (!TryReadFieldReference(ref tptr, out field))
-                            throw new DomException(tptr.TextPtr, "Expected field reference.");
+                            throw new DomException(tptr.TextPtr, tptr.Current.Image.Length, "Expected field reference.");
                         kind = TokenKind.ElseIf;
                         break;
                     case TokenKind.Else:
                         if (kind == TokenKind.Else)
-                            throw new DomException(end, "Else block must be last in a conditional block.");
+                            throw new DomException(end, 1, "Else block must be last in a conditional block.");
                         conditionals.Add(new IfMacroSection(isNot, field, blocks.ToImmutable()));
                         kind = TokenKind.Else;
                         break;
@@ -182,14 +323,14 @@ namespace Mal.OnyxTemplate.DocumentModel
                                 conditionals.Add(new IfMacroSection(isNot, field, blocks.ToImmutable()));
                                 break;
                             default:
-                                throw new DomException(end, "Unexpected token.");
+                                throw new DomException(end, 1, "Unexpected token.");
                         }
 
                         conditional = new ConditionalMacro(ImmutableArray.CreateRange(conditionals), final);
                         ptr = end;
                         return true;
                     default:
-                        throw new DomException(end, "Unexpected token.");
+                        throw new DomException(end, 1, "Unexpected token.");
                 }
             }
         }
@@ -213,7 +354,6 @@ namespace Mal.OnyxTemplate.DocumentModel
                     return false;
                 }
 
-                ptr++;
                 var flag = ptr.Current.Image;
                 if (flag.EqualsIgnoreCase(Keywords.Indented) || flag.EqualsIgnoreCase(Keywords.Indent))
                     indent = true;
@@ -233,14 +373,22 @@ namespace Mal.OnyxTemplate.DocumentModel
                 end++;
             }
 
+            StringSegment word;
+            bool isMacroReference;
             switch (end.Current.Kind)
             {
                 case TokenKind.Word:
+                    isMacroReference = false;
+                    word = end.Current.Image;
+                    end++;
+                    break;
                 case TokenKind.First when up == 0:
                 case TokenKind.Last when up == 0:
                 case TokenKind.Middle when up == 0:
                 case TokenKind.Odd when up == 0:
                 case TokenKind.Even when up == 0:
+                    isMacroReference = true;
+                    word = end.Current.Image;
                     end++;
                     break;
                 default:
@@ -248,9 +396,8 @@ namespace Mal.OnyxTemplate.DocumentModel
                     return false;
             }
 
-            var word = end.Current.Image;
             ptr = end;
-            reference = new DocumentFieldReference(word.ToString(), up);
+            reference = new DocumentFieldReference(word, up, isMacroReference);
             return true;
         }
 
@@ -263,77 +410,41 @@ namespace Mal.OnyxTemplate.DocumentModel
             }
 
             if (!macro.IsLineMacro)
-                throw new DomException(ptr, "Header is expected to be alone on a line.");
+                throw new DomException(ptr, 1, "Header is expected to be alone on a line.");
 
             var indent = false;
             var publicVisibility = false;
+            string description = null;
 
             for (var i = 1; i < macro.Tokens.Length; i++)
             {
-                if (macro.Tokens[i].Kind != TokenKind.Word)
-                    throw new DomException(ptr, "Unexpected token in header.");
-
-                switch (macro.Tokens[i].Select(Keywords.Indent, Keywords.Indented, Keywords.Public))
+                switch (macro.Tokens[i].Kind)
                 {
-                    case 0:
-                    case 1:
-                        indent = true;
+                    case TokenKind.String:
+                        if (description != null)
+                            throw new DomException(ptr, 1, "Unexpected token in header.");
+                        description = macro.Tokens[i].Image.ToString();
                         break;
-                    case 2:
-                        publicVisibility = true;
+                    case TokenKind.Word:
+                        switch (macro.Tokens[i].Select(Keywords.Indent, Keywords.Indented, Keywords.Public))
+                        {
+                            case 0:
+                            case 1:
+                                indent = true;
+                                break;
+                            case 2:
+                                publicVisibility = true;
+                                break;
+                        }
+
                         break;
+                    default:
+                        throw new DomException(ptr, 1, "Unexpected token in header.");
                 }
             }
 
-            header = new DocumentHeader(indent, publicVisibility);
+            header = new DocumentHeader(indent, publicVisibility, description);
         }
-
-        // static bool TryReadCommand(ref TextPtr ptr, out StringSegment command)
-        // {
-        //     var end = ptr;
-        //     if (!end.StartsWith("$"))
-        //     {
-        //         command = default;
-        //         return false;
-        //     }
-        //
-        //     end++;
-        //     if (TryReadWord(ref end, out command))
-        //     {
-        //         ptr = end;
-        //         return true;
-        //     }
-        //
-        //     return true;
-        // }
-        //
-        // static bool TryReadKeyword(ref TextPtr ptr, StringSegment keyword)
-        // {
-        //     var end = ptr;
-        //     if (!TryReadWord(ref end, out var word))
-        //         return false;
-        //     if (!word.EqualsIgnoreCase(keyword))
-        //         return false;
-        //     ptr = end;
-        //     return true;
-        // }
-        //
-        // static bool TryReadWord(ref TextPtr ptr, out StringSegment word)
-        // {
-        //     var end = ptr;
-        //     if (!end.IsStartOfWord())
-        //     {
-        //         word = default;
-        //         return false;
-        //     }
-        //
-        //     end++;
-        //     while (end.IsWordCharacter())
-        //         end++;
-        //     word = ptr.TakeUntil(end);
-        //     ptr = end;
-        //     return true;
-        // }
 
         static class Keywords
         {

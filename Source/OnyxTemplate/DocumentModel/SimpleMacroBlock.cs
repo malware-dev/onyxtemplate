@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace Mal.OnyxTemplate.DocumentModel
 {
@@ -24,5 +26,7 @@ namespace Mal.OnyxTemplate.DocumentModel
             sb.Append(" }}");
             return sb.ToString();
         }
+
+        public override IEnumerable<DocumentBlock> Descendants() => Array.Empty<DocumentBlock>();
     }
 }

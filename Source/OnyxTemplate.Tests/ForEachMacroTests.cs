@@ -24,11 +24,11 @@ public class ForEachMacroTests
         var document = Document.Parse(template);
         document.Blocks.Length.Should().Be(1);
         var block = document.Blocks[0].Should().BeOfType<ForEachMacroBlock>().Subject;
-        block.Variable.Should().Be("item");
+        block.Variable.ToString().Should().Be("item");
         block.Collection.Up.Should().Be(0);
-        block.Collection.Name.Should().Be("items");
+        block.Collection.Name.ToString().Should().Be("items");
         block.Blocks.Length.Should().Be(1);
-        block.Blocks[0].Should().BeOfType<SimpleMacroBlock>().Which.Field.Name.Should().Be("item");
+        block.Blocks[0].Should().BeOfType<SimpleMacroBlock>().Which.Field.Name.ToString().Should().Be("item");
     }
     
     [Test]
@@ -39,10 +39,10 @@ public class ForEachMacroTests
         var document = Document.Parse(template);
         document.Blocks.Length.Should().Be(1);
         var block = document.Blocks[0].Should().BeOfType<ForEachMacroBlock>().Subject;
-        block.Variable.Should().Be("item");
+        block.Variable.ToString().Should().Be("item");
         block.Collection.Up.Should().Be(0);
-        block.Collection.Name.Should().Be("items");
+        block.Collection.Name.ToString().Should().Be("items");
         block.Blocks.Length.Should().Be(1);
-        block.Blocks[0].Should().BeOfType<SimpleMacroBlock>().Which.Field.Name.Should().Be("item");
+        block.Blocks[0].Should().BeOfType<SimpleMacroBlock>().Which.Field.Name.ToString().Should().Be("item");
     }
 }

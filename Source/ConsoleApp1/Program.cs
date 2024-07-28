@@ -3,6 +3,6 @@
 using ConsoleApp1;
 
 Console.WriteLine("----");
-var test = new TestTemplateBase();
-Console.Write(test);
+// var test = new TestTemplateBase();
+//Console.Write(test);
 Console.WriteLine("----");

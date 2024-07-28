@@ -46,7 +46,7 @@ public class DocumentHeaderTests
         var document = Document.Parse(template);
         document.Header.IsEmpty().Should().BeTrue();
         document.Blocks.Should().HaveCount(1);
-        document.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.Should().Be(template);
+        document.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.ToString().Should().Be(template);
     }
 
     [Test]
@@ -61,6 +61,6 @@ public class DocumentHeaderTests
         document.Header.IsEmpty().Should().BeFalse();
         document.Header.PublicVisibility.Should().BeTrue();
         document.Blocks.Should().HaveCount(1);
-        document.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.Should().Be("Hello, World!");
+        document.Blocks[0].Should().BeOfType<TextBlock>().Which.Text.ToString().Should().Be("Hello, World!");
     }
 }

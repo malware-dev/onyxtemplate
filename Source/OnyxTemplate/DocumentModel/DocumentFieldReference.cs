@@ -5,17 +5,24 @@ namespace Mal.OnyxTemplate.DocumentModel
 {
     public readonly struct DocumentFieldReference
     {
-        public readonly string Name;
+        public readonly StringSegment Name;
         public readonly int Up;
 
-        public DocumentFieldReference(string name, int up)
+        public DocumentFieldReference(StringSegment name, int up, bool isMacroReference)
         {
-            Name = name ?? throw new ArgumentNullException(nameof(name));
+            if (name.IsEmpty)
+                throw new ArgumentException("Name cannot be empty.", nameof(name));
+            Name = name;
             Up = up;
+            IsMacroReference = isMacroReference;
         }
-        
-        public bool IsEmpty() => Name == null;
-        
+
+        public bool IsMacroReference { get; }
+
+        public TextPtr Source => new TextPtr(Name.Text, Name.Start);
+
+        public bool IsEmpty() => Name.IsEmpty;
+
         public override string ToString()
         {
             var sb = new StringBuilder();

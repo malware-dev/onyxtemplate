@@ -2,6 +2,8 @@
 // 
 // Copyright 2024 Morten Aune Lyrstad
 
+using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
 
@@ -9,14 +11,14 @@ namespace Mal.OnyxTemplate.DocumentModel
 {
     public class ForEachMacroBlock : DocumentBlock
     {
-        public ForEachMacroBlock(string variable, DocumentFieldReference collection, ImmutableArray<DocumentBlock> blocks)
+        public ForEachMacroBlock(StringSegment variable, DocumentFieldReference collection, ImmutableArray<DocumentBlock> blocks)
         {
             Variable = variable;
             Collection = collection;
             Blocks = blocks;
         }
 
-        public string Variable { get; }
+        public StringSegment Variable { get; }
         public DocumentFieldReference Collection { get; }
         public ImmutableArray<DocumentBlock> Blocks { get; }
 
@@ -32,6 +34,16 @@ namespace Mal.OnyxTemplate.DocumentModel
                 sb.Append(block);
             sb.Append("{{ $next }}");
             return sb.ToString();
+        }
+
+        public override IEnumerable<DocumentBlock> Descendants()
+        {
+            foreach (var block in Blocks)
+            {
+                yield return block;
+                foreach (var subBlock in block.Descendants())
+                    yield return subBlock;
+            }
         }
     }
 }
