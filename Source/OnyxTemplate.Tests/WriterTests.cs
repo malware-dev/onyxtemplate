@@ -142,13 +142,13 @@ public class WriterTests
                     public override string ToString()
                     {
                         var writer = new Writer();
-                        for (int i = 0, n = this.Items.Count - 1; i <= n; i++)
+                        for (int v1 = 0, v2 = this.Items.Count - 1; v1 <= v2; v1++)
                         {
-                            var v1 = this.Items[i];
+                            var v3 = this.Items[v1];
                             writer.Append(@"    ");
-                            writer.Append(v1);
+                            writer.Append(v3);
                             writer.Append(@" ");
-                            writer.Append(v1);
+                            writer.Append(v3);
                             writer.AppendLine();
                         }
                         return writer.ToString();
@@ -187,17 +187,17 @@ public class WriterTests
                     public override string ToString()
                     {
                         var writer = new Writer();
-                        for (int i = 0, n = this.Items.Count - 1; i <= n; i++)
+                        for (int v1 = 0, v2 = this.Items.Count - 1; v1 <= v2; v1++)
                         {
-                            var v1 = this.Items[i];
-                            writer.Append(v1);
-                            writer.Append(v1);
+                            var v3 = this.Items[v1];
+                            writer.Append(v3);
+                            writer.Append(v3);
                             writer.AppendLine();
-                            for (int i = 0, n = v1.SubItems.Count - 1; i <= n; i++)
+                            for (int v4 = 0, v5 = v3.SubItems.Count - 1; v4 <= v5; v4++)
                             {
-                                var v2 = v1.SubItems[i];
-                                writer.Append(v2.FirstName);
-                                writer.Append(v2.LastName);
+                                var v6 = v3.SubItems[v4];
+                                writer.Append(v6.FirstName);
+                                writer.Append(v6.LastName);
                                 writer.AppendLine();
                             }
                         }

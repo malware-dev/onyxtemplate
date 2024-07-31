@@ -1,5 +1,3 @@
 ﻿{{ $foreach row in Rows }}
-{{ $foreach cell in cells }}
-{{ $if .$first }}**{{ $else }}  {{ $end }}{{ $if $first }}|{{ $end }}{{ cell }}{{ $if $last }}|{{ $end }}{{ $if .$last }}**{{ $else }}  {{ $end }}
-{{ $next }}
+{{ $foreach cell in cells }}{{ $if $first }}{{ $if .$first }}**{{ $elseif .$last }}--{{ $else }}  {{ $end }}|{{ $end }}{{ cell }}|{{ $if $last }}{{ $if .$first }}**{{ $elseif .$last }}--{{ $end }}{{ $end }}{{ $next }}
 {{ $next }}

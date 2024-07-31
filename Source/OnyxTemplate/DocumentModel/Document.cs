@@ -451,27 +451,27 @@ namespace Mal.OnyxTemplate.DocumentModel
                     word = end.Current.Image;
                     end++;
                     break;
-                case TokenKind.First when up == 0:
+                case TokenKind.First:
                     metaMacroKind = MetaMacroKind.First;
                     word = new StringSegment("First");
                     end++;
                     break;
-                case TokenKind.Last when up == 0:
+                case TokenKind.Last:
                     metaMacroKind = MetaMacroKind.Last;
                     word = new StringSegment("Last");
                     end++;
                     break;
-                case TokenKind.Middle when up == 0:
+                case TokenKind.Middle:
                     metaMacroKind = MetaMacroKind.Middle;
                     word = new StringSegment("Middle");
                     end++;
                     break;
-                case TokenKind.Odd when up == 0:
+                case TokenKind.Odd:
                     metaMacroKind = MetaMacroKind.Odd;
                     word = new StringSegment("Odd");
                     end++;
                     break;
-                case TokenKind.Even when up == 0:
+                case TokenKind.Even:
                     metaMacroKind = MetaMacroKind.Even;
                     word = new StringSegment("Even");
                     end++;

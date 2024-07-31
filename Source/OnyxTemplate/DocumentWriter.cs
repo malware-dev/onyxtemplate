@@ -81,7 +81,7 @@ namespace Mal.OnyxTemplate
                 .AppendLine("var writer = new Writer();");
 
             if (scope.UsesMacroState())
-                file.AppendLine("State __macro__ = null;");
+                file.AppendLine("State meta = null;");
 
             WriteWriterBlocks(document, file, document.Blocks, scope);
             file.AppendLine("return writer.ToString();")
@@ -98,7 +98,7 @@ namespace Mal.OnyxTemplate
                 if (fieldRef.MetaMacroKind != MetaMacroKind.None)
                 {
                     var sb = new StringBuilder();
-                    sb.Append("__macro__.");
+                    sb.Append("meta.");
                     for (var i = 0; i < fieldRef.Up; i++)
                         sb.Append("Parent.");
                     sb.Append(fieldRef.Name.Text, fieldRef.Name.Start, fieldRef.Name.Length);
@@ -173,27 +173,30 @@ namespace Mal.OnyxTemplate
                         break;
 
                     case ForEachMacroBlock forEachBlock:
+                    {
                         var collectionField = resolveField(forEachBlock.Collection);
                         var collection = scope.Resolve(forEachBlock.Collection);
                         var itemName = Identifier.MakeSafe(forEachBlock.Variable, true);
+                        var i = scope.GetVariableName();
+                        var c = scope.GetVariableName();
                         var itemNameAlias = scope.GetVariableName();
                         var usesMacroState = scope.UsesMacroState();
                         if (usesMacroState)
-                            file.Append("__macro__ = new State(").Append(collectionField).AppendLine(".Count, __macro__);");
-
-                        file.Append("for (int i = 0, n = ").Append(collectionField).AppendLine(".Count - 1; i <= n; i++)")
+                            file.Append("meta = new State(").Append(collectionField).AppendLine(".Count, meta);");
+                        file.Append("for (int ").Append(i).Append(" = 0, ").Append(c).Append(" = ").Append(collectionField).Append(".Count - 1; ").Append(i).Append(" <= ").Append(c).Append("; ").Append(i).AppendLine("++)")
                             .BeginBlock()
-                            .Append("var ").Append(itemNameAlias).Append(" = ").Append(collectionField).Append("[i];").AppendLine();
+                            .Append("var ").Append(itemNameAlias).Append(" = ").Append(collectionField).Append("[").Append(i).Append("];").AppendLine();
                         if (usesMacroState)
-                            file.AppendLine("__macro__.Index = i;");
+                            file.Append("meta.Index = ").Append(i).AppendLine(";");
                         var innerScope = new WriteScope(scope, collection.ComplexType, itemName, itemNameAlias);
                         WriteWriterBlocks(document, file, forEachBlock.Blocks, innerScope);
                         file.EndBlock(true);
 
                         if (usesMacroState)
-                            file.AppendLine("__macro__ = __macro__.Parent;");
+                            file.AppendLine("meta = meta.Parent;");
 
                         break;
+                    }
                 }
             }
         }
