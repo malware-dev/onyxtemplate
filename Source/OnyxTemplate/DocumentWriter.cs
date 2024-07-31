@@ -6,12 +6,14 @@ using System;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Text;
 using Mal.OnyxTemplate.DocumentModel;
 
 namespace Mal.OnyxTemplate
 {
+    /// <summary>
+    ///     A writer used to convert a <see cref="Document" /> to C# class code.
+    /// </summary>
     public class DocumentWriter
     {
         static readonly string[] NewLines = { "\r\n", "\n" };
@@ -19,15 +21,27 @@ namespace Mal.OnyxTemplate
         readonly bool _supportNullable;
         readonly TextWriter _writer;
 
+        /// <summary>
+        ///     Creates a new instance of <see cref="DocumentWriter" />.
+        /// </summary>
+        /// <param name="writer"></param>
+        /// <param name="supportNullable"></param>
         public DocumentWriter(TextWriter writer, bool supportNullable)
         {
             _writer = writer;
             _supportNullable = supportNullable;
         }
 
+        /// <summary>
+        ///     Writes the document to the specified writer.
+        /// </summary>
+        /// <param name="document"></param>
+        /// <param name="rootNamespace"></param>
+        /// <param name="className"></param>
+        /// <param name="publicAccess"></param>
         public void Write(Document document, string rootNamespace, Identifier className, bool publicAccess)
         {
-            var file = new ScopedWriter(_writer, 0);
+            var file = new FluentWriter(_writer, 0);
             file.AppendLineIf(_supportNullable, "#nullable disable")
                 .AppendLine("using System;")
                 .AppendLine("using System.Text;")
@@ -60,7 +74,7 @@ namespace Mal.OnyxTemplate
                 .EndBlock();
         }
 
-        static void WriteWriteMethod(ScopedWriter file, Document document, WriteScope scope)
+        static void WriteWriteMethod(FluentWriter file, Document document, WriteScope scope)
         {
             file.AppendLine("public override string ToString()")
                 .BeginBlock()
@@ -74,14 +88,14 @@ namespace Mal.OnyxTemplate
                 .EndBlock();
         }
 
-        static void WriteWriterBlocks(Document document, ScopedWriter file, ImmutableArray<DocumentBlock> blocks, WriteScope scope)
+        static void WriteWriterBlocks(Document document, FluentWriter file, ImmutableArray<DocumentBlock> blocks, WriteScope scope)
         {
             string resolveField(DocumentFieldReference fieldRef)
             {
                 if (scope.ItemName.IsDefined() && fieldRef.Up == 0 && fieldRef.Name.EqualsIgnoreCase(scope.ItemName.ToStringSegment()))
                     return scope.ItemNameAlias;
 
-                if (fieldRef.MacroKind != MacroKind.None)
+                if (fieldRef.MetaMacroKind != MetaMacroKind.None)
                 {
                     var sb = new StringBuilder();
                     sb.Append("__macro__.");
@@ -184,7 +198,7 @@ namespace Mal.OnyxTemplate
             }
         }
 
-        static void WriteProperties(ScopedWriter file, TemplateTypeDescriptor typeDescriptor)
+        static void WriteProperties(FluentWriter file, TemplateTypeDescriptor typeDescriptor)
         {
             for (int i = 0, n = typeDescriptor.Fields.Length - 1; i <= n; i++)
             {
@@ -254,7 +268,7 @@ namespace Mal.OnyxTemplate
             }
         }
 
-        static void WriteType(ScopedWriter file, TemplateTypeDescriptor nestedType)
+        static void WriteType(FluentWriter file, TemplateTypeDescriptor nestedType)
         {
             file.Append("public class ").AppendLine(nestedType.Name.ToString())
                 .BeginBlock();
@@ -299,7 +313,7 @@ namespace Mal.OnyxTemplate
                 Resolve(field, out var descriptor, out _);
                 return descriptor;
             }
-            
+
             public void Resolve(DocumentFieldReference field, out TemplateFieldDescriptor descriptor, out WriteScope scope)
             {
                 var parent = this;
@@ -310,32 +324,32 @@ namespace Mal.OnyxTemplate
                         throw new DomException(field.Source, field.Name.Length, "Cannot resolve field reference: Too many levels up.");
                 }
 
-                switch (field.MacroKind)
+                switch (field.MetaMacroKind)
                 {
-                    case MacroKind.None:
+                    case MetaMacroKind.None:
                         descriptor = parent.TypeDescriptor.Fields.FirstOrDefault(f => field.Name.EqualsIgnoreCase(f.Name.ToStringSegment()));
                         if (descriptor == null)
                             throw new DomException(field.Source, field.Name.Length, $"Cannot resolve field reference: {field.Name}.");
                         scope = parent;
                         return;
-                    case MacroKind.First:
-                        descriptor = Document.Macros.First;
+                    case MetaMacroKind.First:
+                        descriptor = Document.MetaMacros.First;
                         scope = parent;
                         return;
-                    case MacroKind.Last:
-                        descriptor = Document.Macros.Last;
+                    case MetaMacroKind.Last:
+                        descriptor = Document.MetaMacros.Last;
                         scope = parent;
                         return;
-                    case MacroKind.Middle:
-                        descriptor = Document.Macros.Middle;
+                    case MetaMacroKind.Middle:
+                        descriptor = Document.MetaMacros.Middle;
                         scope = parent;
                         return;
-                    case MacroKind.Odd:
-                        descriptor = Document.Macros.Odd;
+                    case MetaMacroKind.Odd:
+                        descriptor = Document.MetaMacros.Odd;
                         scope = parent;
                         return;
-                    case MacroKind.Even:
-                        descriptor = Document.Macros.Even;
+                    case MetaMacroKind.Even:
+                        descriptor = Document.MetaMacros.Even;
                         scope = parent;
                         return;
                     default:

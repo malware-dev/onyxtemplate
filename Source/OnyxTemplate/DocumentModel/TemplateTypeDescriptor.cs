@@ -5,6 +5,9 @@ using System.Linq;
 
 namespace Mal.OnyxTemplate.DocumentModel
 {
+    /// <summary>
+    ///     Defines a type that will be used to render a template.
+    /// </summary>
     public class TemplateTypeDescriptor
     {
         TemplateTypeDescriptor(Identifier name, ImmutableArray<TemplateFieldDescriptor> fields, ImmutableArray<TemplateTypeDescriptor> complexTypes)
@@ -14,25 +17,53 @@ namespace Mal.OnyxTemplate.DocumentModel
             ComplexTypes = complexTypes;
         }
 
+        /// <summary>
+        ///     The name of the type.
+        /// </summary>
         public Identifier Name { get; }
 
+        /// <summary>
+        ///     All fields of the type.
+        /// </summary>
         public ImmutableArray<TemplateFieldDescriptor> Fields { get; }
+
+        /// <summary>
+        ///     All nested complex types, if any.
+        /// </summary>
         public ImmutableArray<TemplateTypeDescriptor> ComplexTypes { get; }
 
+        /// <summary>
+        ///     A builder for <see cref="TemplateTypeDescriptor" />.
+        /// </summary>
         public class Builder
         {
             readonly ImmutableArray<Builder>.Builder _complexTypes = ImmutableArray.CreateBuilder<Builder>();
             readonly ImmutableArray<TemplateFieldDescriptor.Builder>.Builder _properties = ImmutableArray.CreateBuilder<TemplateFieldDescriptor.Builder>();
 
+            /// <summary>
+            ///     Creates a new instance of <see cref="Builder" />.
+            /// </summary>
+            /// <param name="parent"></param>
             public Builder(Builder parent = null)
             {
                 Parent = parent;
             }
 
+            /// <summary>
+            ///     A reference to the parent builder, if any.
+            /// </summary>
             public Builder Parent { get; }
 
+            /// <summary>
+            ///     The currently defined name of the type.
+            /// </summary>
             public Identifier Name { get; private set; }
 
+            /// <summary>
+            ///     Evaluates the parent builder up to the specified number of levels.
+            /// </summary>
+            /// <param name="levels"></param>
+            /// <returns></returns>
             public Builder Up(int levels = 1)
             {
                 var parent = this;
@@ -41,12 +72,24 @@ namespace Mal.OnyxTemplate.DocumentModel
                 return parent;
             }
 
+            /// <summary>
+            ///     Changes the name of the type.
+            /// </summary>
+            /// <param name="name"></param>
+            /// <returns></returns>
             public Builder WithName(Identifier name)
             {
                 Name = name;
                 return this;
             }
 
+            /// <summary>
+            ///     Adds or alters a field in the type.
+            /// </summary>
+            /// <param name="name"></param>
+            /// <param name="type"></param>
+            /// <param name="configure"></param>
+            /// <returns></returns>
             public Builder WithField(StringSegment name, TemplateFieldType type, Action<TemplateFieldDescriptor.Builder> configure = null)
             {
                 var identifier = Identifier.MakeSafe(name);
@@ -67,6 +110,11 @@ namespace Mal.OnyxTemplate.DocumentModel
                 return this;
             }
 
+            /// <summary>
+            ///     Builds the <see cref="TemplateTypeDescriptor" />.
+            /// </summary>
+            /// <param name="typeResolver"></param>
+            /// <returns></returns>
             public TemplateTypeDescriptor Build(ITypeResolver typeResolver = null)
             {
                 var isMyTypeResolver = typeResolver == null;
@@ -88,6 +136,11 @@ namespace Mal.OnyxTemplate.DocumentModel
                 return new TemplateTypeDescriptor(Name, fields, complexTypes);
             }
 
+            /// <summary>
+            ///     Adds a nested complex type to the type.
+            /// </summary>
+            /// <param name="complexType"></param>
+            /// <returns></returns>
             public Builder WithComplexType(Builder complexType)
             {
                 if (Parent != null)

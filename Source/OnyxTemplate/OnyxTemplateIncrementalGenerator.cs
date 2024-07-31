@@ -39,15 +39,6 @@ namespace Mal.OnyxTemplate
                     .Combine(context.CompilationProvider.Select((compilation, _) => compilation.Options.NullableContextOptions != NullableContextOptions.Disable)));
 
             context.RegisterSourceOutput(onyxFilesProvider, GenerateOnyxSource);
-            //
-            // var onyxFilesProvider = context.AdditionalTextsProvider.Where(text => string.Equals(Path.GetExtension(text.Path), ".onyx", StringComparison.InvariantCultureIgnoreCase))
-            //     .Combine(context.AnalyzerConfigOptionsProvider.Select((options, _) =>
-            //     {
-            //         options.GlobalOptions.TryGetValue("build_property.RootNamespace", out var rootNamespace);
-            //         return rootNamespace ?? "OnyxTemplate";
-            //     }));
-            //
-            // context.RegisterSourceOutput(onyxFilesProvider, GenerateOnyxSource);
         }
 
         void AddFrameworkCode(IncrementalGeneratorPostInitializationContext context)
@@ -61,8 +52,6 @@ namespace Mal.OnyxTemplate
         static void GenerateOnyxSource(SourceProductionContext context, (AdditionalText sourceText, (string rootNamespace, bool supportsNullable) Right) info)
         {
             var (sourceText, (rootNamespace, supportsNullable)) = info;
-            // var templateContext = new TemplateContext(sourceText, context.CancellationToken, context.ReportDiagnostic, context.AddSource, rootNamespace, supportsNullable);
-            // OnyxProducer.GenerateOnyxSource(templateContext, sourceText);
             var text = sourceText.GetText()?.ToString() ?? string.Empty;
             try
             {
@@ -83,7 +72,7 @@ namespace Mal.OnyxTemplate
                 var length = e.Length;
                 var textSpan = TextSpan.FromBounds(ptr.Index, ptr.Index + length);
                 var lc = ptr.GetLineInfo();
-                var linePositionSpan = new LinePositionSpan(new LinePosition(lc.Line, lc.Char), new LinePosition(lc.Line, lc.Char + length));
+                var linePositionSpan = new LinePositionSpan(new LinePosition(lc.Line-1, lc.Char-1), new LinePosition(lc.Line-1, lc.Char-1 + length));
                 var location = Location.Create(sourceText.Path, textSpan, linePositionSpan);
                 context.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.TemplateError, location, e.Message));
             }

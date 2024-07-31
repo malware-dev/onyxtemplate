@@ -6,20 +6,14 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Text;
 
 namespace Mal.OnyxTemplate.DocumentModel
 {
+    /// <summary>
+    ///     Represents a document used to generate template code.
+    /// </summary>
     public class Document
     {
-        public static class Macros
-        {
-            public static readonly TemplateFieldDescriptor First = new TemplateFieldDescriptor(new Identifier("First"), TemplateFieldType.Boolean, TemplateFieldType.None, new Identifier("$first"), null);
-            public static readonly TemplateFieldDescriptor Last = new TemplateFieldDescriptor(new Identifier("Last"), TemplateFieldType.Boolean, TemplateFieldType.None, new Identifier("$last"), null);
-            public static readonly TemplateFieldDescriptor Middle = new TemplateFieldDescriptor(new Identifier("Middle"), TemplateFieldType.Boolean, TemplateFieldType.None, new Identifier("$middle"), null);
-            public static readonly TemplateFieldDescriptor Odd = new TemplateFieldDescriptor(new Identifier("Odd"), TemplateFieldType.Boolean, TemplateFieldType.None, new Identifier("$odd"), null);
-            public static readonly TemplateFieldDescriptor Even = new TemplateFieldDescriptor(new Identifier("Even"), TemplateFieldType.Boolean, TemplateFieldType.None, new Identifier("$even"), null);
-        }
 
         TemplateTypeDescriptor _typeDescriptor;
 
@@ -29,10 +23,20 @@ namespace Mal.OnyxTemplate.DocumentModel
             Blocks = blocks;
         }
 
+        /// <summary>
+        ///     All the blocks in this document.
+        /// </summary>
         public ImmutableArray<DocumentBlock> Blocks { get; }
 
+        /// <summary>
+        ///     An optional header for the document, containing information on how the template should be generated.
+        /// </summary>
         public DocumentHeader Header { get; }
 
+        /// <summary>
+        ///     Returns all descendants of this document.
+        /// </summary>
+        /// <returns></returns>
         public IEnumerable<DocumentBlock> Descendants()
         {
             foreach (var block in Blocks)
@@ -43,8 +47,17 @@ namespace Mal.OnyxTemplate.DocumentModel
             }
         }
 
+        /// <summary>
+        ///     Determines if this document needs a macro state to be rendered (will also evaluate any descendants).
+        /// </summary>
+        /// <returns></returns>
         public bool NeedsMacroState() => Descendants().Any(b => b.NeedsMacroState());
-        
+
+        /// <summary>
+        ///     Creates a template type descriptor from this document, containing all fields and types needed for a template
+        ///     generated from this document.
+        /// </summary>
+        /// <returns></returns>
         public TemplateTypeDescriptor ToTemplateTypeDescriptor()
         {
             if (_typeDescriptor != null)
@@ -63,7 +76,7 @@ namespace Mal.OnyxTemplate.DocumentModel
             var mySimpleMacros = blocks.OfType<SimpleMacroBlock>();
             foreach (var simpleMacro in mySimpleMacros)
             {
-                if (simpleMacro.Field.MacroKind != MacroKind.None)
+                if (simpleMacro.Field.MetaMacroKind != MetaMacroKind.None)
                     continue;
 
                 var builder = descriptor.Up(simpleMacro.Field.Up);
@@ -80,7 +93,7 @@ namespace Mal.OnyxTemplate.DocumentModel
                     var builder = descriptor.Up(section.Field.Up);
                     if (builder == null)
                         throw new DomException(section.Field.Source, section.Field.Name.Length, "Invalid field reference.");
-                    if (section.Field.MacroKind == MacroKind.None)
+                    if (section.Field.MetaMacroKind == MetaMacroKind.None)
                         builder.WithField(section.Field.Name, TemplateFieldType.Boolean);
 
                     ScanThisScope(descriptor, section.Blocks);
@@ -93,7 +106,7 @@ namespace Mal.OnyxTemplate.DocumentModel
             var loopMacros = blocks.OfType<ForEachMacroBlock>();
             foreach (var loop in loopMacros)
             {
-                if (loop.Collection.MacroKind != MacroKind.None)
+                if (loop.Collection.MetaMacroKind != MetaMacroKind.None)
                     throw new DomException(loop.Collection.Source, loop.Collection.Name.Length, "Cannot loop over a macro reference.");
                 var builder = descriptor.Up(loop.Collection.Up);
                 if (builder == null)
@@ -106,7 +119,7 @@ namespace Mal.OnyxTemplate.DocumentModel
                         // If this loop only ever reference a single field which is the loop variable,
                         // this is a simple collection of strings.
 
-                        var n = AllFields(loop, 0).Distinct().Count(f => f.Up >= 1 && f.MacroKind == MacroKind.None);
+                        var n = AllFields(loop, 0).Distinct().Count(f => f.Up >= 1 && f.MetaMacroKind == MetaMacroKind.None);
                         if (n <= 1)
                             return;
 
@@ -132,24 +145,26 @@ namespace Mal.OnyxTemplate.DocumentModel
                         foreach (var field in AllFields(block, scope))
                             yield return field;
                     }
+
                     break;
                 case IfMacroSection ifMacroSection:
-                    yield return new DocumentFieldReference(ifMacroSection.Field.Name, scope - ifMacroSection.Field.Up, ifMacroSection.Field.MacroKind);
+                    yield return new DocumentFieldReference(ifMacroSection.Field.Name, scope - ifMacroSection.Field.Up, ifMacroSection.Field.MetaMacroKind);
                     foreach (var block in ifMacroSection.Blocks)
                     {
                         foreach (var field in AllFields(block, scope))
                             yield return field;
                     }
+
                     break;
             }
         }
-        
+
         static IEnumerable<DocumentFieldReference> AllFields(DocumentBlock block, int scope)
         {
             switch (block)
             {
                 case SimpleMacroBlock simpleMacro:
-                    yield return new DocumentFieldReference(simpleMacro.Field.Name, scope - simpleMacro.Field.Up, simpleMacro.Field.MacroKind);
+                    yield return new DocumentFieldReference(simpleMacro.Field.Name, scope - simpleMacro.Field.Up, simpleMacro.Field.MetaMacroKind);
                     break;
                 case ConditionalMacro conditionalMacro:
                     foreach (var section in conditionalMacro.IfSections)
@@ -157,23 +172,26 @@ namespace Mal.OnyxTemplate.DocumentModel
                         foreach (var field in AllFields(section, scope))
                             yield return field;
                     }
+
                     if (conditionalMacro.ElseSection != null)
                     {
                         foreach (var field in AllFields(conditionalMacro.ElseSection, scope))
                             yield return field;
                     }
+
                     break;
                 case ForEachMacroBlock loopMacro:
-                    yield return new DocumentFieldReference(loopMacro.Collection.Name, scope - loopMacro.Collection.Up, loopMacro.Collection.MacroKind);
+                    yield return new DocumentFieldReference(loopMacro.Collection.Name, scope - loopMacro.Collection.Up, loopMacro.Collection.MetaMacroKind);
                     foreach (var subBlock in loopMacro.Blocks)
                     {
                         foreach (var field in AllFields(subBlock, scope + 1))
                             yield return field;
                     }
+
                     break;
             }
         }
-        
+
         static int CountFields(ConditionalMacroSection section, int scope)
         {
             switch (section)
@@ -183,12 +201,12 @@ namespace Mal.OnyxTemplate.DocumentModel
                 case ElseMacroSection elseMacroSection:
                     return elseMacroSection.Blocks.Sum(b => CountFields(b, scope));
                 case IfMacroSection ifMacroSection:
-                    return (ifMacroSection.Field.MacroKind == MacroKind.None ? 1 : 0) + ifMacroSection.Blocks.Sum(b => CountFields(b, scope));
+                    return (ifMacroSection.Field.MetaMacroKind == MetaMacroKind.None ? 1 : 0) + ifMacroSection.Blocks.Sum(b => CountFields(b, scope));
                 default:
                     throw new ArgumentOutOfRangeException(nameof(section));
             }
         }
-        
+
         static int CountFields(DocumentBlock block, int scope)
         {
             switch (block)
@@ -196,7 +214,7 @@ namespace Mal.OnyxTemplate.DocumentModel
                 case SimpleMacroBlock simpleMacro when scope - simpleMacro.Field.Up < 0:
                     return 0;
                 case SimpleMacroBlock simpleMacro:
-                    return simpleMacro.Field.MacroKind == MacroKind.None ? 1 : 0;
+                    return simpleMacro.Field.MetaMacroKind == MetaMacroKind.None ? 1 : 0;
                 case ConditionalMacro conditionalMacro:
                     return conditionalMacro.IfSections.Sum(b => CountFields(b, scope)) + CountFields(conditionalMacro.ElseSection, scope);
                 case ForEachMacroBlock loopMacro:
@@ -206,6 +224,12 @@ namespace Mal.OnyxTemplate.DocumentModel
             }
         }
 
+        /// <summary>
+        ///     Parses a document from a string.
+        /// </summary>
+        /// <param name="source"></param>
+        /// <returns></returns>
+        /// <exception cref="DomException"></exception>
         public static Document Parse(string source)
         {
             var blocks = ImmutableArray.CreateBuilder<DocumentBlock>();
@@ -419,7 +443,7 @@ namespace Mal.OnyxTemplate.DocumentModel
                 end++;
             }
 
-            MacroKind macroKind = MacroKind.None;
+            var metaMacroKind = MetaMacroKind.None;
             StringSegment word;
             switch (end.Current.Kind)
             {
@@ -428,27 +452,27 @@ namespace Mal.OnyxTemplate.DocumentModel
                     end++;
                     break;
                 case TokenKind.First when up == 0:
-                    macroKind = MacroKind.First;
+                    metaMacroKind = MetaMacroKind.First;
                     word = new StringSegment("First");
                     end++;
                     break;
                 case TokenKind.Last when up == 0:
-                    macroKind = MacroKind.Last;
+                    metaMacroKind = MetaMacroKind.Last;
                     word = new StringSegment("Last");
                     end++;
                     break;
                 case TokenKind.Middle when up == 0:
-                    macroKind = MacroKind.Middle;
+                    metaMacroKind = MetaMacroKind.Middle;
                     word = new StringSegment("Middle");
                     end++;
                     break;
                 case TokenKind.Odd when up == 0:
-                    macroKind = MacroKind.Odd;
+                    metaMacroKind = MetaMacroKind.Odd;
                     word = new StringSegment("Odd");
                     end++;
                     break;
                 case TokenKind.Even when up == 0:
-                    macroKind = MacroKind.Even;
+                    metaMacroKind = MetaMacroKind.Even;
                     word = new StringSegment("Even");
                     end++;
                     break;
@@ -458,7 +482,7 @@ namespace Mal.OnyxTemplate.DocumentModel
             }
 
             ptr = end;
-            reference = new DocumentFieldReference(word, up, macroKind);
+            reference = new DocumentFieldReference(word, up, metaMacroKind);
             return true;
         }
 
@@ -505,6 +529,21 @@ namespace Mal.OnyxTemplate.DocumentModel
             }
 
             header = new DocumentHeader(indent, publicVisibility, description);
+        }
+
+        /// <summary>
+        ///     This static class contains all the meta macros available in the template language.
+        /// </summary>
+        /// <remarks>
+        ///     Meta macros are special macros that are not fields, but rather provide information about the current context.
+        /// </remarks>
+        public static class MetaMacros
+        {
+            public static readonly TemplateFieldDescriptor First = new TemplateFieldDescriptor(new Identifier("First"), TemplateFieldType.Boolean, TemplateFieldType.None, new Identifier("$first"), null);
+            public static readonly TemplateFieldDescriptor Last = new TemplateFieldDescriptor(new Identifier("Last"), TemplateFieldType.Boolean, TemplateFieldType.None, new Identifier("$last"), null);
+            public static readonly TemplateFieldDescriptor Middle = new TemplateFieldDescriptor(new Identifier("Middle"), TemplateFieldType.Boolean, TemplateFieldType.None, new Identifier("$middle"), null);
+            public static readonly TemplateFieldDescriptor Odd = new TemplateFieldDescriptor(new Identifier("Odd"), TemplateFieldType.Boolean, TemplateFieldType.None, new Identifier("$odd"), null);
+            public static readonly TemplateFieldDescriptor Even = new TemplateFieldDescriptor(new Identifier("Even"), TemplateFieldType.Boolean, TemplateFieldType.None, new Identifier("$even"), null);
         }
 
         static class Keywords

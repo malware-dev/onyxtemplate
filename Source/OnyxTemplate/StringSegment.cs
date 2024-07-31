@@ -8,7 +8,7 @@ using System.Collections.Generic;
 namespace Mal.OnyxTemplate
 {
     /// <summary>
-    /// A segment of a string.
+    ///     A segment of a string.
     /// </summary>
     public readonly struct StringSegment
     {
@@ -20,7 +20,7 @@ namespace Mal.OnyxTemplate
         // string _cache;
 
         /// <summary>
-        /// Creates a new <see cref="StringSegment"/> representing a full string.
+        ///     Creates a new <see cref="StringSegment" /> representing a full string.
         /// </summary>
         /// <param name="text"></param>
         public StringSegment(string text)
@@ -30,7 +30,7 @@ namespace Mal.OnyxTemplate
         }
 
         /// <summary>
-        /// Creates a new <see cref="StringSegment"/>.
+        ///     Creates a new <see cref="StringSegment" />.
         /// </summary>
         /// <param name="text"></param>
         /// <param name="start"></param>
@@ -44,24 +44,19 @@ namespace Mal.OnyxTemplate
         }
 
         /// <summary>
-        /// Creates a new <see cref="StringSegment"/>.
+        ///     Creates a new <see cref="StringSegment" />.
         /// </summary>
         /// <param name="start"></param>
         /// <param name="end"></param>
         public StringSegment(TextPtr start, TextPtr end) : this(start.Text, start.Index, end.Index - start.Index) { }
 
         /// <summary>
-        /// Determines if this segment is empty.
+        ///     Determines if this segment is empty.
         /// </summary>
         public bool IsEmpty => Text == null || Length <= 0;
 
-        // /// <summary>
-        // /// Determines whether this segment has been cached into its own separate string.
-        // /// </summary>
-        // public bool IsCached => _cache != null;
-
         /// <summary>
-        /// Returns the character at the relative index.
+        ///     Returns the character at the relative index.
         /// </summary>
         /// <param name="i"></param>
         public char this[int i]
@@ -75,7 +70,7 @@ namespace Mal.OnyxTemplate
         }
 
         /// <summary>
-        /// Attempts to find the string-relative (i.e. not relative to the segment start) index of the given character.
+        ///     Attempts to find the string-relative (i.e. not relative to the segment start) index of the given character.
         /// </summary>
         /// <param name="ch"></param>
         /// <returns></returns>
@@ -87,7 +82,7 @@ namespace Mal.OnyxTemplate
         }
 
         /// <summary>
-        /// Attempts to find the string-relative (i.e. not relative to the segment start) index of the given character.
+        ///     Attempts to find the string-relative (i.e. not relative to the segment start) index of the given character.
         /// </summary>
         /// <param name="ch"></param>
         /// <param name="start"></param>
@@ -100,7 +95,7 @@ namespace Mal.OnyxTemplate
         }
 
         /// <summary>
-        /// Attempts to find the string-relative (i.e. not relative to the segment start) index of any of the given characters.
+        ///     Attempts to find the string-relative (i.e. not relative to the segment start) index of any of the given characters.
         /// </summary>
         /// <param name="chars"></param>
         /// <returns></returns>
@@ -112,7 +107,7 @@ namespace Mal.OnyxTemplate
         }
 
         /// <summary>
-        /// Compares this segment to another, in a case insensitive manner.
+        ///     Compares this segment to another, in a case insensitive manner.
         /// </summary>
         /// <param name="other"></param>
         /// <returns></returns>
@@ -136,7 +131,7 @@ namespace Mal.OnyxTemplate
         }
 
         /// <summary>
-        /// Gets this segment as a separate string.
+        ///     Gets this segment as a separate string.
         /// </summary>
         /// <returns></returns>
         public override string ToString()
@@ -147,7 +142,7 @@ namespace Mal.OnyxTemplate
         }
 
         /// <summary>
-        /// Splits this segment into lines.
+        ///     Splits this segment into lines.
         /// </summary>
         /// <param name="lines"></param>
         public void GetLines(List<string> lines)
@@ -179,7 +174,7 @@ namespace Mal.OnyxTemplate
         }
 
         /// <summary>
-        /// Splits this segment into lines.
+        ///     Splits this segment into lines.
         /// </summary>
         /// <param name="lines"></param>
         public void GetLines(List<StringSegment> lines)
@@ -210,6 +205,7 @@ namespace Mal.OnyxTemplate
             }
         }
 
+        /// <inheritdoc />
         public override int GetHashCode()
         {
             // Calculate hash code using the same algorithm as String.GetHashCode()
@@ -217,18 +213,21 @@ namespace Mal.OnyxTemplate
             var hash2 = hash1;
             var str = Text;
             var start = Start;
-            var n = start + Length;
             for (var i = 0; i < Length; i += 2)
             {
-                hash1 = ((hash1 << 5) + hash1) ^ str[start + i];
+                hash1 = (hash1 << 5) + hash1 ^ str[start + i];
                 if (i + 1 >= Length)
                     break;
-                hash2 = ((hash2 << 5) + hash2) ^ str[start + i + 1];
+                hash2 = (hash2 << 5) + hash2 ^ str[start + i + 1];
             }
-            
+
             return hash1 + hash2 * 1566083941;
         }
 
+        /// <summary>
+        ///    Gets the hash code of this segment in a case insensitive manner.
+        /// </summary>
+        /// <returns></returns>
         public int GetHashCodeIgnoreCase()
         {
             // Calculate hash code using the same algorithm as String.GetHashCode()
@@ -236,16 +235,15 @@ namespace Mal.OnyxTemplate
             var hash2 = hash1;
             var str = Text;
             var start = Start;
-            var n = start + Length;
             for (var i = 0; i < Length; i += 2)
             {
-                hash1 = ((hash1 << 5) + hash1) ^ char.ToUpperInvariant(str[start + i]);
+                hash1 = (hash1 << 5) + hash1 ^ char.ToUpperInvariant(str[start + i]);
                 if (i + 1 >= Length)
                     break;
-                hash2 = ((hash2 << 5) + hash2) ^ char.ToUpperInvariant(str[start + i + 1]);
+                hash2 = (hash2 << 5) + hash2 ^ char.ToUpperInvariant(str[start + i + 1]);
             }
-            
-            return hash1 + (hash2 * 1566083941);
+
+            return hash1 + hash2 * 1566083941;
         }
     }
 }

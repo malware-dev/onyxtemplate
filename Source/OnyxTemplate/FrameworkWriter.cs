@@ -7,6 +7,9 @@ using System.IO;
 
 namespace Mal.OnyxTemplate
 {
+    /// <summary>
+    /// A writer used to generate the framework code, which is shared between all templates.
+    /// </summary>
     public class FrameworkWriter
     {
         readonly StringWriter _writer;
@@ -18,7 +21,7 @@ namespace Mal.OnyxTemplate
 
         public void Write()
         {
-            var file = new ScopedWriter(_writer, 0);
+            var file = new FluentWriter(_writer, 0);
             file.AppendLine("using System;")
                 .AppendLine("using System.Text;")
                 .AppendLine("#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.")

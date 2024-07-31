@@ -8,6 +8,9 @@ using System.Text;
 
 namespace Mal.OnyxTemplate.DocumentModel
 {
+    /// <summary>
+    ///     Represents an identifier.
+    /// </summary>
     public readonly struct Identifier : IEquatable<Identifier>, IComparable<Identifier>, IComparable
     {
         public static bool operator ==(Identifier left, Identifier right) => left.Equals(right);
@@ -17,14 +20,35 @@ namespace Mal.OnyxTemplate.DocumentModel
         public static bool operator <=(Identifier left, Identifier right) => left.CompareTo(right) <= 0;
         public static bool operator >=(Identifier left, Identifier right) => left.CompareTo(right) >= 0;
 
+        /// <summary>
+        ///     A comparer that compares identifiers case-insensitively.
+        /// </summary>
         public static readonly IdentifierIgnoreCaseComparer IgnoreCaseComparer = new IdentifierIgnoreCaseComparer();
 
+        /// <summary>
+        ///     A comparer that compares identifiers case-sensitively.
+        /// </summary>
         public static readonly IdentifierComparer Comparer = new IdentifierComparer();
 
+        /// <summary>
+        ///     An undefined identifier.
+        /// </summary>
         public static readonly Identifier Undefined = new Identifier();
 
+        /// <summary>
+        ///     Creates a new identifier from a string.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="camelCase"></param>
+        /// <returns></returns>
         public static Identifier MakeSafe(string input, bool camelCase = false) => MakeSafe(string.IsNullOrEmpty(input) ? default : new StringSegment(input), camelCase);
 
+        /// <summary>
+        ///     Creates a new identifier from a string segment.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="camelCase"></param>
+        /// <returns></returns>
         public static Identifier MakeSafe(StringSegment input, bool camelCase = false)
         {
             if (input.IsEmpty)
@@ -81,6 +105,11 @@ namespace Mal.OnyxTemplate.DocumentModel
 
         readonly string _value;
 
+        /// <summary>
+        ///     Creates a new instance of <see cref="Identifier" />.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <exception cref="ArgumentException"></exception>
         public Identifier(string value)
         {
             if (string.IsNullOrEmpty(value))
@@ -88,6 +117,11 @@ namespace Mal.OnyxTemplate.DocumentModel
             _value = value;
         }
 
+        /// <summary>
+        ///     Creates a new instance of <see cref="Identifier" />.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <exception cref="ArgumentException"></exception>
         public Identifier(StringSegment value)
         {
             if (value.IsEmpty)
@@ -95,8 +129,16 @@ namespace Mal.OnyxTemplate.DocumentModel
             _value = value.ToString();
         }
 
+        /// <summary>
+        ///     Whether this identifier is defined.
+        /// </summary>
+        /// <returns></returns>
         public bool IsDefined() => _value != null;
 
+        /// <summary>
+        ///     Converts this identifier to PascalCase.
+        /// </summary>
+        /// <returns></returns>
         public Identifier AsPascalCase()
         {
             var value = _value;
@@ -107,6 +149,10 @@ namespace Mal.OnyxTemplate.DocumentModel
             return new Identifier(char.ToUpper(value[0]) + value.Substring(1));
         }
 
+        /// <summary>
+        ///     Converts this identifier to camelCase.
+        /// </summary>
+        /// <returns></returns>
         public Identifier AsCamelCase()
         {
             var value = _value;
@@ -117,6 +163,11 @@ namespace Mal.OnyxTemplate.DocumentModel
             return new Identifier(char.ToLower(value[0]) + value.Substring(1));
         }
 
+        /// <summary>
+        ///     Adds a prefix to this identifier.
+        /// </summary>
+        /// <param name="prefix"></param>
+        /// <returns></returns>
         public Identifier WithPrefix(string prefix)
         {
             if (string.IsNullOrEmpty(prefix))
@@ -124,18 +175,35 @@ namespace Mal.OnyxTemplate.DocumentModel
             return new Identifier(prefix + _value);
         }
 
+        /// <inheritdoc />
         public bool Equals(Identifier other) => _value == other._value;
 
+        /// <summary>
+        ///     Determines if this identifier is equal to another identifier, ignoring case.
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
         public bool EqualsIgnoreCase(Identifier other) => string.Equals(_value, other._value, StringComparison.OrdinalIgnoreCase);
 
+        /// <inheritdoc />
         public override bool Equals(object obj) => obj is Identifier other && Equals(other);
 
+        /// <inheritdoc />
         public override int GetHashCode() => _value != null ? _value.GetHashCode() : 0;
 
+        /// <summary>
+        ///     Gets the hash code of this identifier, ignoring case.
+        /// </summary>
+        /// <returns></returns>
         public int GetHashCodeIgnoreCase() => _value != null ? StringComparer.OrdinalIgnoreCase.GetHashCode(_value) : 0;
 
+        /// <inheritdoc />
         public override string ToString() => _value ?? string.Empty;
-        
+
+        /// <summary>
+        ///     Converts this identifier to a string segment.
+        /// </summary>
+        /// <returns></returns>
         public StringSegment ToStringSegment()
         {
             if (_value == null)
@@ -143,25 +211,37 @@ namespace Mal.OnyxTemplate.DocumentModel
             return new StringSegment(_value);
         }
 
+        /// <inheritdoc />
         public int CompareTo(Identifier other) => string.Compare(_value, other._value, StringComparison.Ordinal);
 
+        /// <inheritdoc />
         public int CompareTo(object obj)
         {
             if (ReferenceEquals(null, obj)) return 1;
             return obj is Identifier other ? CompareTo(other) : throw new ArgumentException($"Object must be of type {nameof(Identifier)}");
         }
 
+        /// <summary>
+        ///     A comparer that compares identifiers case-insensitively.
+        /// </summary>
         public class IdentifierIgnoreCaseComparer : IEqualityComparer<Identifier>
         {
+            /// <inheritdoc />
             public bool Equals(Identifier x, Identifier y) => x.EqualsIgnoreCase(y);
 
+            /// <inheritdoc />
             public int GetHashCode(Identifier obj) => obj.GetHashCodeIgnoreCase();
         }
 
+        /// <summary>
+        ///     A comparer that compares identifiers case-sensitively.
+        /// </summary>
         public class IdentifierComparer : IEqualityComparer<Identifier>
         {
+            /// <inheritdoc />
             public bool Equals(Identifier x, Identifier y) => x.Equals(y);
 
+            /// <inheritdoc />
             public int GetHashCode(Identifier obj) => obj.GetHashCode();
         }
     }

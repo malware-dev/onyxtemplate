@@ -6,8 +6,14 @@ using Microsoft.CodeAnalysis;
 
 namespace Mal.OnyxTemplate
 {
-    public class DiagnosticDescriptors
+    /// <summary>
+    /// A static class containing all diagnostic descriptors used by the OnyxTemplate project.
+    /// </summary>
+    public static class DiagnosticDescriptors
     {
+        /// <summary>
+        /// An error that occurs when a template is invalid.
+        /// </summary>
         public static readonly DiagnosticDescriptor TemplateError = new DiagnosticDescriptor(
             id: "OT0001",
             title: "Template error",

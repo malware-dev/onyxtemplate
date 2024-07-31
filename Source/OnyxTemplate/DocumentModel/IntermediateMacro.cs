@@ -2,12 +2,13 @@
 // 
 // Copyright 2024 Morten Aune Lyrstad
 
-using System;
 using System.Collections.Immutable;
 
 namespace Mal.OnyxTemplate.DocumentModel
 {
-
+    /// <summary>
+    ///     An intermediate macro that is used during parsing.
+    /// </summary>
     class IntermediateMacro
     {
         IntermediateMacro(ImmutableArray<Token> tokens, bool isLineMacro)
@@ -16,10 +17,25 @@ namespace Mal.OnyxTemplate.DocumentModel
             IsLineMacro = isLineMacro;
         }
 
+        /// <summary>
+        ///     The tokens that make up the macro.
+        /// </summary>
         public ImmutableArray<Token> Tokens { get; }
+
+        /// <summary>
+        ///     Whether the macro takes up the entire line.
+        /// </summary>
         public bool IsLineMacro { get; }
+
+        /// <summary>
+        ///     What kind of macro this is, as determined by the first token.
+        /// </summary>
         public TokenKind Kind => Tokens.Length >= 1 ? Tokens[0].Kind : TokenKind.None;
 
+        /// <summary>
+        ///     Gets a token at the specified index.
+        /// </summary>
+        /// <param name="index"></param>
         public Token this[int index]
         {
             get
@@ -30,6 +46,13 @@ namespace Mal.OnyxTemplate.DocumentModel
             }
         }
 
+        /// <summary>
+        ///     Attempts to parse a macro from the specified pointer.
+        /// </summary>
+        /// <param name="ptr"></param>
+        /// <param name="macro"></param>
+        /// <returns></returns>
+        /// <exception cref="DomException"></exception>
         public static bool TryParse(ref TextPtr ptr, out IntermediateMacro macro)
         {
             var tokens = ImmutableArray.CreateBuilder<Token>();
@@ -132,7 +155,7 @@ namespace Mal.OnyxTemplate.DocumentModel
                     end = end.SkipWhitespace(true);
                     continue;
                 }
-                
+
                 if (end.StartsWithWord("$middle", true))
                 {
                     var image = end.Take(7);
@@ -141,7 +164,7 @@ namespace Mal.OnyxTemplate.DocumentModel
                     end = end.SkipWhitespace(true);
                     continue;
                 }
-                
+
                 if (end.StartsWithWord("$odd", true))
                 {
                     var image = end.Take(4);
@@ -150,7 +173,7 @@ namespace Mal.OnyxTemplate.DocumentModel
                     end = end.SkipWhitespace(true);
                     continue;
                 }
-                
+
                 if (end.StartsWithWord("$even", true))
                 {
                     var image = end.Take(5);
@@ -177,7 +200,7 @@ namespace Mal.OnyxTemplate.DocumentModel
                     end = end.SkipWhitespace(true);
                     continue;
                 }
-                
+
                 if (end.StartsWith("\"") || end.StartsWith("'"))
                 {
                     var quote = end.Char;
@@ -230,6 +253,13 @@ namespace Mal.OnyxTemplate.DocumentModel
             return true;
         }
 
+        /// <summary>
+        ///     Attempts to parse a macro from the specified pointer, and checks if it is of the specified kind.
+        /// </summary>
+        /// <param name="ptr"></param>
+        /// <param name="id"></param>
+        /// <param name="macro"></param>
+        /// <returns></returns>
         public static bool TryParse(ref TextPtr ptr, TokenKind id, out IntermediateMacro macro)
         {
             var end = ptr;
@@ -250,6 +280,11 @@ namespace Mal.OnyxTemplate.DocumentModel
             return true;
         }
 
+        /// <summary>
+        ///     Determines if this macro is of the specified kind.
+        /// </summary>
+        /// <param name="kind"></param>
+        /// <returns></returns>
         public bool IsKind(TokenKind kind) => Tokens.Length >= 1 && Tokens[0].Kind == kind;
     }
 }

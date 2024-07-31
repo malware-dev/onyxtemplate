@@ -2,7 +2,6 @@
 // 
 // Copyright 2024 Morten Aune Lyrstad
 
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -10,8 +9,17 @@ using System.Text;
 
 namespace Mal.OnyxTemplate.DocumentModel
 {
+    /// <summary>
+    ///     A block that iterates over a collection and renders the inner blocks for each item in the collection.
+    /// </summary>
     public class ForEachMacroBlock : DocumentBlock
     {
+        /// <summary>
+        ///     Creates a new instance of <see cref="ForEachMacroBlock" />.
+        /// </summary>
+        /// <param name="variable"></param>
+        /// <param name="collection"></param>
+        /// <param name="blocks"></param>
         public ForEachMacroBlock(StringSegment variable, DocumentFieldReference collection, ImmutableArray<DocumentBlock> blocks)
         {
             Variable = variable;
@@ -19,10 +27,22 @@ namespace Mal.OnyxTemplate.DocumentModel
             Blocks = blocks;
         }
 
+        /// <summary>
+        ///     A variable to store the current item in the collection.
+        /// </summary>
         public StringSegment Variable { get; }
+
+        /// <summary>
+        ///     Reference to the collection to iterate over.
+        /// </summary>
         public DocumentFieldReference Collection { get; }
+
+        /// <summary>
+        ///     All blocks to render for each item in the collection.
+        /// </summary>
         public ImmutableArray<DocumentBlock> Blocks { get; }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             var sb = new StringBuilder();
@@ -37,6 +57,7 @@ namespace Mal.OnyxTemplate.DocumentModel
             return sb.ToString();
         }
 
+        /// <inheritdoc />
         public override IEnumerable<DocumentBlock> Descendants()
         {
             foreach (var block in Blocks)
@@ -47,6 +68,7 @@ namespace Mal.OnyxTemplate.DocumentModel
             }
         }
 
+        /// <inheritdoc />
         public override bool NeedsMacroState() => Descendants().Any(b => b.NeedsMacroState());
     }
 }

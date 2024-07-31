@@ -2,17 +2,23 @@
 
 namespace Mal.OnyxTemplate.DocumentModel
 {
-    public interface ITypeResolver
-    {
-        TemplateTypeDescriptor ResolveComplexType(Identifier name);
-    }
-
+    /// <summary>
+    ///     Describes a field in a <see cref="TemplateTypeDescriptor" />.
+    /// </summary>
     public class TemplateFieldDescriptor
     {
         readonly Identifier _complexTypeName;
         readonly ITypeResolver _typeResolver;
         TemplateTypeDescriptor _complexType;
 
+        /// <summary>
+        ///     Creates a new instance of <see cref="TemplateFieldDescriptor" />.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="type"></param>
+        /// <param name="elementType"></param>
+        /// <param name="complexTypeName"></param>
+        /// <param name="typeResolver"></param>
         public TemplateFieldDescriptor(Identifier name, TemplateFieldType type, TemplateFieldType elementType, Identifier complexTypeName, ITypeResolver typeResolver)
         {
             _complexTypeName = complexTypeName;
@@ -22,10 +28,26 @@ namespace Mal.OnyxTemplate.DocumentModel
             ElementType = elementType;
         }
 
+        /// <summary>
+        ///     The name of the field.
+        /// </summary>
         public Identifier Name { get; }
+
+        /// <summary>
+        ///     The type of the field.
+        /// </summary>
         public TemplateFieldType Type { get; }
+
+        /// <summary>
+        ///     The type of the elements in the field, if <see cref="Type" /> is <see cref="TemplateFieldType.Collection" />.
+        /// </summary>
         public TemplateFieldType ElementType { get; }
 
+        /// <summary>
+        ///     If <see cref="Type" /> or <see cref="ElementType" /> is <see cref="TemplateFieldType.Complex" />, this property
+        ///     will contain the complex type descriptor.
+        /// </summary>
+        /// <exception cref="InvalidOperationException"></exception>
         public TemplateTypeDescriptor ComplexType
         {
             get
@@ -43,11 +65,22 @@ namespace Mal.OnyxTemplate.DocumentModel
             }
         }
 
+        /// <summary>
+        ///     A builder for creating instances of <see cref="TemplateFieldDescriptor" />.
+        /// </summary>
         public class Builder
         {
+            /// <summary>
+            ///     Creates a new instance of <see cref="Builder" />.
+            /// </summary>
             public Builder()
             { }
 
+            /// <summary>
+            ///     Creates a new instance of <see cref="Builder" />.
+            /// </summary>
+            /// <param name="name"></param>
+            /// <param name="type"></param>
             public Builder(Identifier name, TemplateFieldType type)
                 : this(name, type, TemplateFieldType.None)
             { }
@@ -59,20 +92,44 @@ namespace Mal.OnyxTemplate.DocumentModel
                 ElementType = elementType;
             }
 
+            /// <summary>
+            ///     The currently defined name of the field.
+            /// </summary>
             public Identifier Name { get; private set; }
 
+            /// <summary>
+            ///     The currently defined type of the field.
+            /// </summary>
             public TemplateFieldType Type { get; private set; }
 
+            /// <summary>
+            ///     The currently defined type of the elements in the field, if <see cref="Type" /> is
+            ///     <see cref="TemplateFieldType.Collection" />.
+            /// </summary>
             public TemplateFieldType ElementType { get; private set; }
 
+            /// <summary>
+            ///     The currently defined identifier of the complex type, if <see cref="Type" /> or <see cref="ElementType" /> is
+            ///     <see cref="TemplateFieldType.Complex" />.
+            /// </summary>
             public Identifier ComplexTypeName { get; private set; }
 
-            // public Builder WithName(StringSegment name)
-            // {
-            //     Name = Document.CSharpify(name);
-            //     return this;
-            // }
+            /// <summary>
+            ///     Changes the name of the field.
+            /// </summary>
+            /// <param name="name"></param>
+            /// <returns></returns>
+            public Builder WithName(Identifier name)
+            {
+                Name = name;
+                return this;
+            }
 
+            /// <summary>
+            ///     Changes the type of the field.
+            /// </summary>
+            /// <param name="type"></param>
+            /// <returns></returns>
             public Builder WithType(TemplateFieldType type)
             {
                 if (Type == TemplateFieldType.Collection)
@@ -82,6 +139,11 @@ namespace Mal.OnyxTemplate.DocumentModel
                 return this;
             }
 
+            /// <summary>
+            ///     Changes the type of the field to <see cref="TemplateFieldType.Complex" />, and sets the complex type name.
+            /// </summary>
+            /// <param name="complexTypeName"></param>
+            /// <returns></returns>
             public Builder WithType(Identifier complexTypeName)
             {
                 ComplexTypeName = complexTypeName;
@@ -92,6 +154,10 @@ namespace Mal.OnyxTemplate.DocumentModel
                 return this;
             }
 
+            /// <summary>
+            ///     Changes the type of the field to <see cref="TemplateFieldType.Collection" />.
+            /// </summary>
+            /// <returns></returns>
             public Builder AsCollection()
             {
                 ElementType = Type;
@@ -99,6 +165,11 @@ namespace Mal.OnyxTemplate.DocumentModel
                 return this;
             }
 
+            /// <summary>
+            ///     Builds the <see cref="TemplateFieldDescriptor" />.
+            /// </summary>
+            /// <param name="typeResolver"></param>
+            /// <returns></returns>
             public TemplateFieldDescriptor Build(ITypeResolver typeResolver)
             {
                 if (Type != TemplateFieldType.Complex && ElementType != TemplateFieldType.Complex)

@@ -492,16 +492,5 @@ namespace Mal.OnyxTemplate
             return new LineInfo(line, @char);
         }
     }
-    
-    public readonly struct LineInfo
-    {
-        public readonly int Line;
-        public readonly int Char;
 
-        public LineInfo(int line, int @char)
-        {
-            Line = line;
-            Char = @char;
-        }
-    }
 }

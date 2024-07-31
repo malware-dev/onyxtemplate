@@ -3,38 +3,49 @@ using System.Text;
 
 namespace Mal.OnyxTemplate.DocumentModel
 {
-    public enum MacroKind
-    {
-        None,
-        First,
-        Last,
-        Middle,
-        Odd,
-        Even
-    }
-    
+    /// <summary>
+    /// A reference to a field or meta-macro in a document.
+    /// </summary>
     public readonly struct DocumentFieldReference: IEquatable<DocumentFieldReference>
     {
         public readonly StringSegment Name;
         public readonly int Up;
         readonly int _hashCode;
 
-        public DocumentFieldReference(StringSegment name, int up, MacroKind macroKind)
+        /// <summary>
+        /// Creates a new instance of <see cref="DocumentFieldReference"/>.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="up"></param>
+        /// <param name="metaMacroKind"></param>
+        /// <exception cref="ArgumentException"></exception>
+        public DocumentFieldReference(StringSegment name, int up, MetaMacroKind metaMacroKind)
         {
             if (name.IsEmpty)
                 throw new ArgumentException("Name cannot be empty.", nameof(name));
             Name = name;
             Up = up;
-            MacroKind = macroKind;
-            _hashCode = CalcHashCode(name, up, (int)macroKind);
+            MetaMacroKind = metaMacroKind;
+            _hashCode = CalcHashCode(name, up, (int)metaMacroKind);
         }
 
-        public MacroKind MacroKind { get; }
+        /// <summary>
+        /// Determines if this reference is a meta-macro, and if so, which kind.
+        /// </summary>
+        public MetaMacroKind MetaMacroKind { get; }
 
+        /// <summary>
+        /// Gets a text-pointer to the source of this reference.
+        /// </summary>
         public TextPtr Source => new TextPtr(Name.Text, Name.Start);
 
+        /// <summary>
+        /// Whether this reference is empty.
+        /// </summary>
+        /// <returns></returns>
         public bool IsEmpty() => Name.IsEmpty;
 
+        /// <inheritdoc />
         public override string ToString()
         {
             var sb = new StringBuilder();
@@ -46,8 +57,10 @@ namespace Mal.OnyxTemplate.DocumentModel
             return sb.ToString();
         }
 
-        public bool Equals(DocumentFieldReference other) => Name.EqualsIgnoreCase(other.Name) && Up == other.Up && MacroKind == other.MacroKind;
+        /// <inheritdoc />
+        public bool Equals(DocumentFieldReference other) => Name.EqualsIgnoreCase(other.Name) && Up == other.Up && MetaMacroKind == other.MetaMacroKind;
 
+        /// <inheritdoc />
         public override bool Equals(object obj) => obj is DocumentFieldReference other && Equals(other);
 
         static int CalcHashCode(StringSegment name, int up, int kind)
@@ -61,6 +74,7 @@ namespace Mal.OnyxTemplate.DocumentModel
             }
         }
 
+        /// <inheritdoc />
         public override int GetHashCode() => _hashCode;
     }
 }
