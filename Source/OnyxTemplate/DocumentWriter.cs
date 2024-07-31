@@ -6,6 +6,7 @@ using System;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using Mal.OnyxTemplate.DocumentModel;
 
@@ -34,9 +35,9 @@ namespace Mal.OnyxTemplate
                 .AppendLine()
                 .AppendLine("#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member.")
                 .Append("namespace ").AppendLine(rootNamespace ?? "OnyxTemplates")
-                .AppendLine("{").Indent()
+                .BeginBlock()
                 .AppendIf(publicAccess, "public ", "internal ").Append("class ").Append(className.ToString()).AppendLine(": Mal.OnyxTemplate.TextTemplate")
-                .AppendLine("{").Indent();
+                .BeginBlock();
             var typeDescriptor = document.ToTemplateTypeDescriptor();
             WriteProperties(file, typeDescriptor);
             file.AppendLine();
@@ -55,14 +56,14 @@ namespace Mal.OnyxTemplate
                 }
             }
 
-            file.Unindent().AppendLine("}")
-                .Unindent().AppendLine("}");
+            file.EndBlock()
+                .EndBlock();
         }
 
         static void WriteWriteMethod(ScopedWriter file, Document document, WriteScope scope)
         {
             file.AppendLine("public override string ToString()")
-                .AppendLine("{").Indent()
+                .BeginBlock()
                 .AppendLine("var writer = new Writer();");
 
             if (scope.UsesMacroState())
@@ -70,7 +71,7 @@ namespace Mal.OnyxTemplate
 
             WriteWriterBlocks(document, file, document.Blocks, scope);
             file.AppendLine("return writer.ToString();")
-                .Unindent().AppendLine("}");
+                .EndBlock();
         }
 
         static void WriteWriterBlocks(Document document, ScopedWriter file, ImmutableArray<DocumentBlock> blocks, WriteScope scope)
@@ -142,17 +143,17 @@ namespace Mal.OnyxTemplate
                             }
 
                             file.AppendIf(index > 0, "else if (", "if (").AppendIf(ifSection.Not, "!").Append(fieldReference).AppendLine(")")
-                                .AppendLine("{").Indent();
+                                .BeginBlock();
                             WriteWriterBlocks(document, file, ifSection.Blocks, scope);
-                            file.Unindent().AppendLine("}");
+                            file.EndBlock(true);
                         }
 
                         if (ifBlock.ElseSection != null)
                         {
                             file.AppendLine("else")
-                                .AppendLine("{").Indent();
+                                .BeginBlock();
                             WriteWriterBlocks(document, file, ifBlock.ElseSection.Blocks, scope);
-                            file.Unindent().AppendLine("}");
+                            file.EndBlock(true);
                         }
 
                         break;
@@ -167,13 +168,13 @@ namespace Mal.OnyxTemplate
                             file.Append("__macro__ = new State(").Append(collectionField).AppendLine(".Count, __macro__);");
 
                         file.Append("for (int i = 0, n = ").Append(collectionField).AppendLine(".Count - 1; i <= n; i++)")
-                            .AppendLine("{").Indent()
+                            .BeginBlock()
                             .Append("var ").Append(itemNameAlias).Append(" = ").Append(collectionField).Append("[i];").AppendLine();
                         if (usesMacroState)
                             file.AppendLine("__macro__.Index = i;");
                         var innerScope = new WriteScope(scope, collection.ComplexType, itemName, itemNameAlias);
                         WriteWriterBlocks(document, file, forEachBlock.Blocks, innerScope);
-                        file.Unindent().AppendLine("}");
+                        file.EndBlock(true);
 
                         if (usesMacroState)
                             file.AppendLine("__macro__ = __macro__.Parent;");
@@ -256,9 +257,9 @@ namespace Mal.OnyxTemplate
         static void WriteType(ScopedWriter file, TemplateTypeDescriptor nestedType)
         {
             file.Append("public class ").AppendLine(nestedType.Name.ToString())
-                .AppendLine("{").Indent();
+                .BeginBlock();
             WriteProperties(file, nestedType);
-            file.Unindent().AppendLine("}");
+            file.EndBlock();
         }
 
         class WriteScope
