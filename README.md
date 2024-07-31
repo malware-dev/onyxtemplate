@@ -47,7 +47,7 @@ To generate lists of data you need to utilize the special `$foreach` macro:
 ```
 Animals:
 {{ $foreach animal in animals }}   
-   {{ animal }}
+    {{ animal }}
 {{ $next }}
 ```
 Providing we give it the following data provider:
@@ -68,6 +68,86 @@ Animals:
    Tiger
    Bear
 ```
+
+You may reference a field in an outer loop by prefixing your field with a period `.`:
+```
+{{ $foreach animal in animals }}   
+{{ animal }}:
+{{ $foreach name in names }}
+    - {{ name }}{{ $if ..showSurNames}}{{ surname }}{{ $end }}
+   {{ $next }}
+{{ $next }}
+```
+
+then, if we provide the following data:
+```csharp
+var template = new Template();
+template.Animals = new[] 
+{
+    new Template.AnimalItem 
+    { 
+        Type = "Dog", 
+        Names = new[] {
+            new Template.NameItem
+            {
+                Name = "Rex",
+                Surname = "The Dog"
+            },
+            new Template.NameItem
+            {
+                Name = "Fido",
+                Surname = "Fidocious"
+            }
+        }
+    },
+    new Template.AnimalItem 
+    { 
+        Type = "Cat", 
+        Names = new[] {
+            new Template.NameItem
+            {
+                Name = "Whiskers",
+                Surname = "Wheezy"   
+            },
+            new Template.NameItem
+            {
+                Name = "Fluffy",
+                Surname = "McFluffington"
+            }
+        }
+    }                 
+};
+```
+Then we get two different results, based on whether:
+```csharp
+template.ShowSurNames = true;
+```
+==>
+```
+Dog:
+   - Rex The Dog
+   - Fido Fidocious
+Cat:
+    - Whiskers Wheezy
+    - Fluffy McFluffington
+```
+or
+```csharp
+template.ShowSurNames = false;
+```
+==>
+```
+Dog:
+   - Rex
+   - Fido
+Cat:
+    - Whiskers
+    - Fluffy
+```
+Note that we're referencing the `showSurNames` field in the root of the template, 
+by prefixing it with `..`. Each `.` jumps a single level up in the macro hierarchy,
+so in this example we are skipping over the `animal` loop and going straight to the
+top.
 
 _See also [item state conditionals](#item-state-conditionals)_
 
