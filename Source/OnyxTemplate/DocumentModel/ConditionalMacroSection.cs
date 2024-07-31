@@ -9,5 +9,6 @@ namespace Mal.OnyxTemplate.DocumentModel
     public abstract class ConditionalMacroSection
     {
         public abstract IEnumerable<DocumentBlock> Descendants();
+        public abstract bool NeedsMacroState();
     }
 }

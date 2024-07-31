@@ -7,14 +7,14 @@ namespace Mal.OnyxTemplate.DocumentModel
 {
     public class TemplateTypeDescriptor
     {
-        TemplateTypeDescriptor(string name, ImmutableArray<TemplateFieldDescriptor> fields, ImmutableArray<TemplateTypeDescriptor> complexTypes)
+        TemplateTypeDescriptor(Identifier name, ImmutableArray<TemplateFieldDescriptor> fields, ImmutableArray<TemplateTypeDescriptor> complexTypes)
         {
             Name = name;
             Fields = fields;
             ComplexTypes = complexTypes;
         }
 
-        public string Name { get; }
+        public Identifier Name { get; }
 
         public ImmutableArray<TemplateFieldDescriptor> Fields { get; }
         public ImmutableArray<TemplateTypeDescriptor> ComplexTypes { get; }
@@ -31,7 +31,7 @@ namespace Mal.OnyxTemplate.DocumentModel
 
             public Builder Parent { get; }
 
-            public string Name { get; private set; }
+            public Identifier Name { get; private set; }
 
             public Builder Up(int levels = 1)
             {
@@ -41,18 +41,17 @@ namespace Mal.OnyxTemplate.DocumentModel
                 return parent;
             }
 
-            public Builder WithName(string name)
+            public Builder WithName(Identifier name)
             {
-                name = Document.CSharpify(name);
                 Name = name;
                 return this;
             }
 
-            public Builder WithField(string name, TemplateFieldType type, Action<TemplateFieldDescriptor.Builder> configure = null)
+            public Builder WithField(StringSegment name, TemplateFieldType type, Action<TemplateFieldDescriptor.Builder> configure = null)
             {
-                name = Document.CSharpify(name);
+                var identifier = Identifier.MakeSafe(name);
 
-                var field = _properties.FirstOrDefault(p => p.Name == name);
+                var field = _properties.FirstOrDefault(p => p.Name == identifier);
                 if (field != null)
                 {
                     if (type > field.Type)
@@ -60,7 +59,7 @@ namespace Mal.OnyxTemplate.DocumentModel
                 }
                 else
                 {
-                    field = new TemplateFieldDescriptor.Builder(name, type);
+                    field = new TemplateFieldDescriptor.Builder(identifier, type);
                     _properties.Add(field);
                 }
 
@@ -99,8 +98,8 @@ namespace Mal.OnyxTemplate.DocumentModel
 
             class TypeResolver : ITypeResolver
             {
-                public Dictionary<string, TemplateTypeDescriptor> Types { get; } = new Dictionary<string, TemplateTypeDescriptor>(StringComparer.OrdinalIgnoreCase);
-                public TemplateTypeDescriptor ResolveComplexType(string name) => Types.TryGetValue(name, out var type) ? type : null;
+                public Dictionary<Identifier, TemplateTypeDescriptor> Types { get; } = new Dictionary<Identifier, TemplateTypeDescriptor>(Identifier.IgnoreCaseComparer);
+                public TemplateTypeDescriptor ResolveComplexType(Identifier name) => Types.TryGetValue(name, out var type) ? type : null;
             }
         }
     }

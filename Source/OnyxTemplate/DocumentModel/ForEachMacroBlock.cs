@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Text;
 
 namespace Mal.OnyxTemplate.DocumentModel
@@ -45,5 +46,7 @@ namespace Mal.OnyxTemplate.DocumentModel
                     yield return subBlock;
             }
         }
+
+        public override bool NeedsMacroState() => Descendants().Any(b => b.NeedsMacroState());
     }
 }

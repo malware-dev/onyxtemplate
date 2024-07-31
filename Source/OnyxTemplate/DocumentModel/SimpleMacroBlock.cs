@@ -28,5 +28,7 @@ namespace Mal.OnyxTemplate.DocumentModel
         }
 
         public override IEnumerable<DocumentBlock> Descendants() => Array.Empty<DocumentBlock>();
+
+        public override bool NeedsMacroState() => Field.MacroKind != MacroKind.None;
     }
 }

@@ -14,5 +14,6 @@ namespace Mal.OnyxTemplate.DocumentModel
 
         public override string ToString() => Text.ToString();
         public override IEnumerable<DocumentBlock> Descendants() => Array.Empty<DocumentBlock>();
+        public override bool NeedsMacroState() => false;
     }
 }

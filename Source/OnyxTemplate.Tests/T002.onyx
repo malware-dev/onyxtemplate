@@ -1,0 +1,1 @@
+﻿Animals: {{ $foreach animal in Animals }}{{ animal }}{{ $if not $last }}, {{ $end }}{{ $next }}

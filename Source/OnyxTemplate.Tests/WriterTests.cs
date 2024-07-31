@@ -18,6 +18,7 @@ public class WriterTests
         using System.Text;
         using System.Collections.Generic;
 
+        #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member.
         namespace OnyxTemplates
         {
             public class MyTemplate: Mal.OnyxTemplate.TextTemplate
@@ -45,7 +46,7 @@ public class WriterTests
             """
                     public virtual string UserName { get; set; }
 
-                    public string ToString()
+                    public override string ToString()
                     {
                         var writer = new Writer();
                         writer.Append(@"Hello, ");
@@ -60,7 +61,7 @@ public class WriterTests
         var document = Document.Parse(template);
         var writer = new StringWriter();
         var documentWriter = new DocumentWriter(writer, false);
-        documentWriter.Write(document, "OnyxTemplates", "MyTemplate", true);
+        documentWriter.Write(document, "OnyxTemplates", new Identifier("MyTemplate"), true);
         var result = writer.ToString();
         result.Should().Be(expected);
     }
@@ -87,7 +88,7 @@ public class WriterTests
                     public virtual string UserName { get; set; }
                     public virtual string WorkTitle { get; set; }
 
-                    public string ToString()
+                    public override string ToString()
                     {
                         var writer = new Writer();
                         if (this.IsAdmin)
@@ -117,7 +118,7 @@ public class WriterTests
         var document = Document.Parse(template);
         var writer = new StringWriter();
         var documentWriter = new DocumentWriter(writer, false);
-        documentWriter.Write(document, "OnyxTemplates", "MyTemplate", true);
+        documentWriter.Write(document, "OnyxTemplates", new Identifier("MyTemplate"), true);
         var result = writer.ToString();
         result.Should().Be(expected);
     }
@@ -138,22 +139,18 @@ public class WriterTests
                     IReadOnlyList<string> _items;
                     public virtual IReadOnlyList<string> Items { get { return _items ?? Array.Empty<string>(); } set { _items = value; } }
 
-                    public string ToString()
+                    public override string ToString()
                     {
                         var writer = new Writer();
-                        State __macro__ = null;
-                        __macro__ = new State(__macro__);
                         for (int i = 0, n = this.Items.Count - 1; i <= n; i++)
                         {
                             var v1 = this.Items[i];
-                            __macro__.Index = i;
                             writer.Append(@"    ");
-                            writer.Append(v1.item);
+                            writer.Append(v1);
                             writer.Append(@" ");
-                            writer.Append(v1.item);
+                            writer.Append(v1);
                             writer.AppendLine();
                         }
-                        __macro__ = __macro__.Parent;
                         return writer.ToString();
                     }
             
@@ -163,7 +160,7 @@ public class WriterTests
         var document = Document.Parse(template);
         var writer = new StringWriter();
         var documentWriter = new DocumentWriter(writer, false);
-        documentWriter.Write(document, "OnyxTemplates", "MyTemplate", true);
+        documentWriter.Write(document, "OnyxTemplates", new Identifier("MyTemplate"), true);
         var result = writer.ToString();
         result.Should().Be(expected);
     }
@@ -187,30 +184,23 @@ public class WriterTests
                     IReadOnlyList<ItemItem> _items;
                     public virtual IReadOnlyList<ItemItem> Items { get { return _items ?? Array.Empty<ItemItem>(); } set { _items = value; } }
 
-                    public string ToString()
+                    public override string ToString()
                     {
                         var writer = new Writer();
-                        State __macro__ = null;
-                        __macro__ = new State(__macro__);
                         for (int i = 0, n = this.Items.Count - 1; i <= n; i++)
                         {
                             var v1 = this.Items[i];
-                            __macro__.Index = i;
-                            writer.Append(v1.item);
-                            writer.Append(v1.item);
+                            writer.Append(v1);
+                            writer.Append(v1);
                             writer.AppendLine();
-                            __macro__ = new State(__macro__);
                             for (int i = 0, n = v1.SubItems.Count - 1; i <= n; i++)
                             {
                                 var v2 = v1.SubItems[i];
-                                __macro__.Index = i;
                                 writer.Append(v2.FirstName);
                                 writer.Append(v2.LastName);
                                 writer.AppendLine();
                             }
-                            __macro__ = __macro__.Parent;
                         }
-                        __macro__ = __macro__.Parent;
                         return writer.ToString();
                     }
 
@@ -233,7 +223,7 @@ public class WriterTests
         var document = Document.Parse(template);
         var writer = new StringWriter();
         var documentWriter = new DocumentWriter(writer, false);
-        documentWriter.Write(document, "OnyxTemplates", "MyTemplate", true);
+        documentWriter.Write(document, "OnyxTemplates", new Identifier("MyTemplate"), true);
         var result = writer.ToString();
         result.Should().Be(expected);
     }
@@ -253,14 +243,14 @@ public class WriterTests
                     public virtual string Indented { get; set; }
                     public virtual string Unindented { get; set; }
 
-                    public string ToString()
+                    public override string ToString()
                     {
                         var writer = new Writer();
                         writer.Append(@"The following text is unindented: ");
                         writer.Append(this.Unindented);
                         writer.AppendLine();
                         writer.Append(@"The following text is indented: ");
-                        writer.Append(Indent(writer.Col, this.Indented));
+                        writer.Append(this.Indented, true);
                         return writer.ToString();
                     }
 
@@ -270,7 +260,7 @@ public class WriterTests
         var document = Document.Parse(template);
         var writer = new StringWriter();
         var documentWriter = new DocumentWriter(writer, false);
-        documentWriter.Write(document, "OnyxTemplates", "MyTemplate", true);
+        documentWriter.Write(document, "OnyxTemplates", new Identifier("MyTemplate"), true);
         var result = writer.ToString();
         result.Should().Be(expected);
     }

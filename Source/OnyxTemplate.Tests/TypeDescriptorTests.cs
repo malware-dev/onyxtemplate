@@ -23,7 +23,7 @@ public class TypeDescriptorTests
         var typeDescriptor = document.ToTemplateTypeDescriptor();
         typeDescriptor.Should().NotBeNull();
         typeDescriptor.Fields.Length.Should().Be(1);
-        typeDescriptor.Fields[0].Name.Should().Be("UserName");
+        typeDescriptor.Fields[0].Name.Should().Be(new Identifier("UserName"));
         typeDescriptor.Fields[0].Type.Should().Be(TemplateFieldType.String);
     }
     
@@ -46,11 +46,11 @@ public class TypeDescriptorTests
         var typeDescriptor = document.ToTemplateTypeDescriptor();
         typeDescriptor.Should().NotBeNull();
         typeDescriptor.Fields.Length.Should().Be(3);
-        typeDescriptor.Fields[0].Name.Should().Be("IsAdmin");
+        typeDescriptor.Fields[0].Name.Should().Be(new Identifier("IsAdmin"));
         typeDescriptor.Fields[0].Type.Should().Be(TemplateFieldType.Boolean);
-        typeDescriptor.Fields[1].Name.Should().Be("UserName");
+        typeDescriptor.Fields[1].Name.Should().Be(new Identifier("UserName"));
         typeDescriptor.Fields[1].Type.Should().Be(TemplateFieldType.String);
-        typeDescriptor.Fields[2].Name.Should().Be("WorkTitle");
+        typeDescriptor.Fields[2].Name.Should().Be(new Identifier("WorkTitle"));
         typeDescriptor.Fields[2].Type.Should().Be(TemplateFieldType.String);
     }
     
@@ -68,7 +68,7 @@ public class TypeDescriptorTests
         var typeDescriptor = document.ToTemplateTypeDescriptor();
         typeDescriptor.Should().NotBeNull();
         typeDescriptor.Fields.Length.Should().Be(1);
-        typeDescriptor.Fields[0].Name.Should().Be("Items");
+        typeDescriptor.Fields[0].Name.Should().Be(new Identifier("Items"));
         typeDescriptor.Fields[0].Type.Should().Be(TemplateFieldType.Collection);
         typeDescriptor.Fields[0].ElementType.Should().Be(TemplateFieldType.String);
     }
@@ -87,7 +87,7 @@ public class TypeDescriptorTests
         var typeDescriptor = document.ToTemplateTypeDescriptor();
         typeDescriptor.Should().NotBeNull();
         typeDescriptor.Fields.Length.Should().Be(1);
-        typeDescriptor.Fields[0].Name.Should().Be("Items");
+        typeDescriptor.Fields[0].Name.Should().Be(new Identifier("Items"));
         typeDescriptor.Fields[0].Type.Should().Be(TemplateFieldType.Collection);
         typeDescriptor.Fields[0].ElementType.Should().Be(TemplateFieldType.Complex);
     }
@@ -106,21 +106,21 @@ public class TypeDescriptorTests
         var typeDescriptor = document.ToTemplateTypeDescriptor();
         typeDescriptor.Should().NotBeNull();
         typeDescriptor.Fields.Length.Should().Be(2);
-        typeDescriptor.Fields[0].Name.Should().Be("Products");
+        typeDescriptor.Fields[0].Name.Should().Be(new Identifier("Products"));
         typeDescriptor.Fields[0].Type.Should().Be(TemplateFieldType.Collection);
         typeDescriptor.Fields[0].ElementType.Should().Be(TemplateFieldType.Complex);
-        typeDescriptor.Fields[1].Name.Should().Be("UseDiscount");
+        typeDescriptor.Fields[1].Name.Should().Be(new Identifier("UseDiscount"));
         typeDescriptor.Fields[1].Type.Should().Be(TemplateFieldType.Boolean);
         
         var complexType = typeDescriptor.Fields[0].ComplexType;
         complexType.Should().NotBeNull();
-        complexType.Name.Should().Be("ProductItem");
+        complexType.Name.Should().Be(new Identifier("ProductItem"));
         complexType.Fields.Length.Should().Be(3);
-        complexType.Fields[0].Name.Should().Be("DiscountPrice");
+        complexType.Fields[0].Name.Should().Be(new Identifier("DiscountPrice"));
         complexType.Fields[0].Type.Should().Be(TemplateFieldType.String);
-        complexType.Fields[1].Name.Should().Be("Name");
+        complexType.Fields[1].Name.Should().Be(new Identifier("Name"));
         complexType.Fields[1].Type.Should().Be(TemplateFieldType.String);
-        complexType.Fields[2].Name.Should().Be("Price");
+        complexType.Fields[2].Name.Should().Be(new Identifier("Price"));
         complexType.Fields[2].Type.Should().Be(TemplateFieldType.String);
     }
 }

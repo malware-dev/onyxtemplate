@@ -77,7 +77,7 @@ public class ComplexTest
         var document = Document.Parse(Source);
         var writer = new StringWriter();
         var documentWriter = new DocumentWriter(writer, false);
-        documentWriter.Write(document, "OnyxTemplates", "MyTemplate", true);
+        documentWriter.Write(document, "OnyxTemplates", new Identifier("MyTemplate"), true);
         var result = writer.ToString();
     }
 }

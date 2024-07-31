@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Text;
 
 namespace Mal.OnyxTemplate.DocumentModel
@@ -39,6 +40,14 @@ namespace Mal.OnyxTemplate.DocumentModel
                 foreach (var subBlock in block.Descendants())
                     yield return subBlock;
             }
+        }
+
+        public override bool NeedsMacroState()
+        {
+            if (Field.MacroKind != MacroKind.None)
+                return true;
+            
+            return Descendants().Any(b => b.NeedsMacroState());
         }
     }
 }

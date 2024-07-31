@@ -6,6 +6,10 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
     </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <DocumentationFile>bin\Debug\ConsoleApp1.xml</DocumentationFile>
+    </PropertyGroup>
     
     <ItemGroup>
         <ProjectReference Include="../OnyxTemplate/OnyxTemplate.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />

@@ -2,6 +2,7 @@
 // 
 // Copyright 2024 Morten Aune Lyrstad
 
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -11,6 +12,15 @@ namespace Mal.OnyxTemplate.DocumentModel
 {
     public class Document
     {
+        public static class Macros
+        {
+            public static readonly TemplateFieldDescriptor First = new TemplateFieldDescriptor(new Identifier("First"), TemplateFieldType.Boolean, TemplateFieldType.None, new Identifier("$first"), null);
+            public static readonly TemplateFieldDescriptor Last = new TemplateFieldDescriptor(new Identifier("Last"), TemplateFieldType.Boolean, TemplateFieldType.None, new Identifier("$last"), null);
+            public static readonly TemplateFieldDescriptor Middle = new TemplateFieldDescriptor(new Identifier("Middle"), TemplateFieldType.Boolean, TemplateFieldType.None, new Identifier("$middle"), null);
+            public static readonly TemplateFieldDescriptor Odd = new TemplateFieldDescriptor(new Identifier("Odd"), TemplateFieldType.Boolean, TemplateFieldType.None, new Identifier("$odd"), null);
+            public static readonly TemplateFieldDescriptor Even = new TemplateFieldDescriptor(new Identifier("Even"), TemplateFieldType.Boolean, TemplateFieldType.None, new Identifier("$even"), null);
+        }
+
         TemplateTypeDescriptor _typeDescriptor;
 
         Document(DocumentHeader header, ImmutableArray<DocumentBlock> blocks)
@@ -20,9 +30,9 @@ namespace Mal.OnyxTemplate.DocumentModel
         }
 
         public ImmutableArray<DocumentBlock> Blocks { get; }
-        
+
         public DocumentHeader Header { get; }
-        
+
         public IEnumerable<DocumentBlock> Descendants()
         {
             foreach (var block in Blocks)
@@ -33,66 +43,8 @@ namespace Mal.OnyxTemplate.DocumentModel
             }
         }
 
-        /// <summary>
-        ///     Converts an input string to a C# identifier.
-        /// </summary>
-        /// <param name="input"></param>
-        /// <param name="camelCase">Produce camelCase rather than PascalCase.</param>
-        /// <returns></returns>
-        public static string CSharpify(string input, bool camelCase = false)
-        {
-            if (string.IsNullOrEmpty(input))
-                return "_";
-
-            var buffer = new StringBuilder();
-            var firstChar = input[0];
-
-            if (camelCase)
-                buffer.Append(char.IsDigit(firstChar) ? '_' : char.ToLower(firstChar));
-            else
-                buffer.Append(char.IsDigit(firstChar) ? '_' : char.ToUpper(firstChar));
-
-            for (var i = 1; i < input.Length; i++)
-            {
-                var c = input[i];
-
-                if (char.IsLetterOrDigit(c))
-                    buffer.Append(c);
-                else
-                {
-                    switch (c)
-                    {
-                        case 'æ':
-                            buffer.Append("ae");
-                            break;
-                        case 'ø':
-                            buffer.Append("oe");
-                            break;
-                        case 'å':
-                            buffer.Append("aa");
-                            break;
-                        case 'ü':
-                            buffer.Append("ue");
-                            break;
-                        case 'ö':
-                            buffer.Append("oe");
-                            break;
-                        case 'ä':
-                            buffer.Append("ae");
-                            break;
-                        case 'ß':
-                            buffer.Append("ss");
-                            break;
-                        default:
-                            buffer.Append('_');
-                            break;
-                    }
-                }
-            }
-
-            return buffer.ToString();
-        }
-
+        public bool NeedsMacroState() => Descendants().Any(b => b.NeedsMacroState());
+        
         public TemplateTypeDescriptor ToTemplateTypeDescriptor()
         {
             if (_typeDescriptor != null)
@@ -111,10 +63,13 @@ namespace Mal.OnyxTemplate.DocumentModel
             var mySimpleMacros = blocks.OfType<SimpleMacroBlock>();
             foreach (var simpleMacro in mySimpleMacros)
             {
+                if (simpleMacro.Field.MacroKind != MacroKind.None)
+                    continue;
+
                 var builder = descriptor.Up(simpleMacro.Field.Up);
                 if (builder == null)
                     throw new DomException(simpleMacro.Field.Source, simpleMacro.Field.Name.Length, "Invalid field reference.");
-                builder.WithField(simpleMacro.Field.Name.ToString(), TemplateFieldType.String);
+                builder.WithField(simpleMacro.Field.Name, TemplateFieldType.String);
             }
 
             var conditionalMacros = blocks.OfType<ConditionalMacro>();
@@ -125,7 +80,8 @@ namespace Mal.OnyxTemplate.DocumentModel
                     var builder = descriptor.Up(section.Field.Up);
                     if (builder == null)
                         throw new DomException(section.Field.Source, section.Field.Name.Length, "Invalid field reference.");
-                    builder.WithField(section.Field.Name.ToString(), TemplateFieldType.Boolean);
+                    if (section.Field.MacroKind == MacroKind.None)
+                        builder.WithField(section.Field.Name, TemplateFieldType.Boolean);
 
                     ScanThisScope(descriptor, section.Blocks);
                 }
@@ -137,26 +93,116 @@ namespace Mal.OnyxTemplate.DocumentModel
             var loopMacros = blocks.OfType<ForEachMacroBlock>();
             foreach (var loop in loopMacros)
             {
+                if (loop.Collection.MacroKind != MacroKind.None)
+                    throw new DomException(loop.Collection.Source, loop.Collection.Name.Length, "Cannot loop over a macro reference.");
                 var builder = descriptor.Up(loop.Collection.Up);
                 if (builder == null)
                     throw new DomException(loop.Collection.Source, loop.Collection.Name.Length, "Invalid field reference.");
-                builder.WithField(loop.Collection.Name.ToString(),
+                builder.WithField(loop.Collection.Name,
                     TemplateFieldType.String,
                     p =>
                     {
                         p.AsCollection();
                         // If this loop only ever reference a single field which is the loop variable,
                         // this is a simple collection of strings.
-                        if (loop.Blocks.All(b => b is TextBlock || b is SimpleMacroBlock sm && sm.Field.Up == 0 && sm.Field.Name.EqualsIgnoreCase(loop.Variable)))
+
+                        var n = AllFields(loop, 0).Distinct().Count(f => f.Up >= 1 && f.MacroKind == MacroKind.None);
+                        if (n <= 1)
                             return;
 
-                        var complexTypeName = loop.Variable + "Item";
+                        var complexTypeName = Identifier.MakeSafe(loop.Variable + "Item");
                         var complexType = new TemplateTypeDescriptor.Builder(descriptor)
                             .WithName(complexTypeName);
                         ScanThisScope(complexType, loop.Blocks);
                         builder.WithComplexType(complexType);
                         p.WithType(complexTypeName);
                     });
+            }
+        }
+
+        static IEnumerable<DocumentFieldReference> AllFields(ConditionalMacroSection section, int scope)
+        {
+            switch (section)
+            {
+                case null:
+                    yield break;
+                case ElseMacroSection elseMacroSection:
+                    foreach (var block in elseMacroSection.Blocks)
+                    {
+                        foreach (var field in AllFields(block, scope))
+                            yield return field;
+                    }
+                    break;
+                case IfMacroSection ifMacroSection:
+                    yield return new DocumentFieldReference(ifMacroSection.Field.Name, scope - ifMacroSection.Field.Up, ifMacroSection.Field.MacroKind);
+                    foreach (var block in ifMacroSection.Blocks)
+                    {
+                        foreach (var field in AllFields(block, scope))
+                            yield return field;
+                    }
+                    break;
+            }
+        }
+        
+        static IEnumerable<DocumentFieldReference> AllFields(DocumentBlock block, int scope)
+        {
+            switch (block)
+            {
+                case SimpleMacroBlock simpleMacro:
+                    yield return new DocumentFieldReference(simpleMacro.Field.Name, scope - simpleMacro.Field.Up, simpleMacro.Field.MacroKind);
+                    break;
+                case ConditionalMacro conditionalMacro:
+                    foreach (var section in conditionalMacro.IfSections)
+                    {
+                        foreach (var field in AllFields(section, scope))
+                            yield return field;
+                    }
+                    if (conditionalMacro.ElseSection != null)
+                    {
+                        foreach (var field in AllFields(conditionalMacro.ElseSection, scope))
+                            yield return field;
+                    }
+                    break;
+                case ForEachMacroBlock loopMacro:
+                    yield return new DocumentFieldReference(loopMacro.Collection.Name, scope - loopMacro.Collection.Up, loopMacro.Collection.MacroKind);
+                    foreach (var subBlock in loopMacro.Blocks)
+                    {
+                        foreach (var field in AllFields(subBlock, scope + 1))
+                            yield return field;
+                    }
+                    break;
+            }
+        }
+        
+        static int CountFields(ConditionalMacroSection section, int scope)
+        {
+            switch (section)
+            {
+                case null:
+                    return 0;
+                case ElseMacroSection elseMacroSection:
+                    return elseMacroSection.Blocks.Sum(b => CountFields(b, scope));
+                case IfMacroSection ifMacroSection:
+                    return (ifMacroSection.Field.MacroKind == MacroKind.None ? 1 : 0) + ifMacroSection.Blocks.Sum(b => CountFields(b, scope));
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(section));
+            }
+        }
+        
+        static int CountFields(DocumentBlock block, int scope)
+        {
+            switch (block)
+            {
+                case SimpleMacroBlock simpleMacro when scope - simpleMacro.Field.Up < 0:
+                    return 0;
+                case SimpleMacroBlock simpleMacro:
+                    return simpleMacro.Field.MacroKind == MacroKind.None ? 1 : 0;
+                case ConditionalMacro conditionalMacro:
+                    return conditionalMacro.IfSections.Sum(b => CountFields(b, scope)) + CountFields(conditionalMacro.ElseSection, scope);
+                case ForEachMacroBlock loopMacro:
+                    return loopMacro.Blocks.Sum(b => CountFields(b, scope + 1));
+                default:
+                    return 0;
             }
         }
 
@@ -373,22 +419,37 @@ namespace Mal.OnyxTemplate.DocumentModel
                 end++;
             }
 
+            MacroKind macroKind = MacroKind.None;
             StringSegment word;
-            bool isMacroReference;
             switch (end.Current.Kind)
             {
                 case TokenKind.Word:
-                    isMacroReference = false;
                     word = end.Current.Image;
                     end++;
                     break;
                 case TokenKind.First when up == 0:
+                    macroKind = MacroKind.First;
+                    word = new StringSegment("First");
+                    end++;
+                    break;
                 case TokenKind.Last when up == 0:
+                    macroKind = MacroKind.Last;
+                    word = new StringSegment("Last");
+                    end++;
+                    break;
                 case TokenKind.Middle when up == 0:
+                    macroKind = MacroKind.Middle;
+                    word = new StringSegment("Middle");
+                    end++;
+                    break;
                 case TokenKind.Odd when up == 0:
+                    macroKind = MacroKind.Odd;
+                    word = new StringSegment("Odd");
+                    end++;
+                    break;
                 case TokenKind.Even when up == 0:
-                    isMacroReference = true;
-                    word = end.Current.Image;
+                    macroKind = MacroKind.Even;
+                    word = new StringSegment("Even");
                     end++;
                     break;
                 default:
@@ -397,7 +458,7 @@ namespace Mal.OnyxTemplate.DocumentModel
             }
 
             ptr = end;
-            reference = new DocumentFieldReference(word, up, isMacroReference);
+            reference = new DocumentFieldReference(word, up, macroKind);
             return true;
         }
 
@@ -455,5 +516,4 @@ namespace Mal.OnyxTemplate.DocumentModel
             public static readonly StringSegment In = new StringSegment("in");
         }
     }
-
 }

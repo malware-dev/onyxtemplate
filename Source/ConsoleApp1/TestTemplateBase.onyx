@@ -1,7 +1,3 @@
-{{ $template indented }}
-Heading
-{{ $if HasSomething }}
-{{ $foreach item in Items }}
-    {{ item.Name }}
+﻿{{ $foreach product in Products }}
+    {{ name }} {{ $if .useDiscount }}{{ discountPrice }}{{ $else }}{{ price }}{{ $end }}
 {{ $next }}
-{{ $end }}

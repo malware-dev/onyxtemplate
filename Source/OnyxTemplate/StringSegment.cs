@@ -53,7 +53,7 @@ namespace Mal.OnyxTemplate
         /// <summary>
         /// Determines if this segment is empty.
         /// </summary>
-        public bool IsEmpty => Text == null;
+        public bool IsEmpty => Text == null || Length <= 0;
 
         // /// <summary>
         // /// Determines whether this segment has been cached into its own separate string.
@@ -208,6 +208,44 @@ namespace Mal.OnyxTemplate
                 if (start < str.Length && str[start] == '\n')
                     start++;
             }
+        }
+
+        public override int GetHashCode()
+        {
+            // Calculate hash code using the same algorithm as String.GetHashCode()
+            var hash1 = 5381;
+            var hash2 = hash1;
+            var str = Text;
+            var start = Start;
+            var n = start + Length;
+            for (var i = 0; i < Length; i += 2)
+            {
+                hash1 = ((hash1 << 5) + hash1) ^ str[start + i];
+                if (i + 1 >= Length)
+                    break;
+                hash2 = ((hash2 << 5) + hash2) ^ str[start + i + 1];
+            }
+            
+            return hash1 + hash2 * 1566083941;
+        }
+
+        public int GetHashCodeIgnoreCase()
+        {
+            // Calculate hash code using the same algorithm as String.GetHashCode()
+            var hash1 = 5381;
+            var hash2 = hash1;
+            var str = Text;
+            var start = Start;
+            var n = start + Length;
+            for (var i = 0; i < Length; i += 2)
+            {
+                hash1 = ((hash1 << 5) + hash1) ^ char.ToUpperInvariant(str[start + i]);
+                if (i + 1 >= Length)
+                    break;
+                hash2 = ((hash2 << 5) + hash2) ^ char.ToUpperInvariant(str[start + i + 1]);
+            }
+            
+            return hash1 + (hash2 * 1566083941);
         }
     }
 }

@@ -2,6 +2,7 @@
 // 
 // Copyright 2024 Morten Aune Lyrstad
 
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
@@ -43,6 +44,20 @@ namespace Mal.OnyxTemplate.DocumentModel
                 foreach (var block in ElseSection.Descendants())
                     yield return block;
             }
+        }
+
+        public override bool NeedsMacroState()
+        {
+            foreach (var section in IfSections)
+            {
+                if (section.NeedsMacroState())
+                    return true;
+            }
+
+            if (ElseSection != null && ElseSection.NeedsMacroState())
+                return true;
+
+            return false;
         }
     }
 }
