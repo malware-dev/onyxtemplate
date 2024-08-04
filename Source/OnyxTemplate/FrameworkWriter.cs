@@ -2,7 +2,6 @@
 // 
 // Copyright 2024 Morten Aune Lyrstad
 
-using System;
 using System.IO;
 
 namespace Mal.OnyxTemplate
@@ -24,6 +23,7 @@ namespace Mal.OnyxTemplate
             var file = new FluentWriter(_writer, 0);
             file.AppendLine("using System;")
                 .AppendLine("using System.Text;")
+                .AppendLine("using System.Collections.Generic;")
                 .AppendLine("#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.")
                 .AppendLine("#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member.")
                 .AppendLine("namespace Mal.OnyxTemplate")
