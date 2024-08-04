@@ -45,8 +45,8 @@ public class ComplexTest
             Description = "Document Description",
             Properties = new[]
             {
-                new ComplexTemplate.PropertyItem { Signature = "Property1", Description = "Property1 Description" },
-                new ComplexTemplate.PropertyItem { Signature = "Property2", Description = "Property2 Description" }
+                new ComplexTemplate.PropertiesItem { Signature = "Property1", Description = "Property1 Description" },
+                new ComplexTemplate.PropertiesItem { Signature = "Property2", Description = "Property2 Description" }
             }
         };
         
@@ -87,23 +87,23 @@ public class ComplexTest
             Description = "Document Description",
             Fields = new[]
             {
-                new ComplexTemplate.FieldItem { Signature = "Field1", Description = "Field1 Description" },
-                new ComplexTemplate.FieldItem { Signature = "Field2", Description = "Field2 Description" }
+                new ComplexTemplate.FieldsItem { Signature = "Field1", Description = "Field1 Description" },
+                new ComplexTemplate.FieldsItem { Signature = "Field2", Description = "Field2 Description" }
             },
             Events = new[]
             {
-                new ComplexTemplate.EventItem { Signature = "Event1", Description = "Event1 Description" },
-                new ComplexTemplate.EventItem { Signature = "Event2", Description = "Event2 Description" }
+                new ComplexTemplate.EventsItem { Signature = "Event1", Description = "Event1 Description" },
+                new ComplexTemplate.EventsItem { Signature = "Event2", Description = "Event2 Description" }
             },
             Properties = new[]
             {
-                new ComplexTemplate.PropertyItem { Signature = "Property1", Description = "Property1 Description" },
-                new ComplexTemplate.PropertyItem { Signature = "Property2", Description = "Property2 Description" }
+                new ComplexTemplate.PropertiesItem { Signature = "Property1", Description = "Property1 Description" },
+                new ComplexTemplate.PropertiesItem { Signature = "Property2", Description = "Property2 Description" }
             },
             Methods = new[]
             {
-                new ComplexTemplate.MethodItem { Signature = "Method1", Description = "Method1 Description" },
-                new ComplexTemplate.MethodItem { Signature = "Method2", Description = "Method2 Description" }
+                new ComplexTemplate.MethodsItem { Signature = "Method1", Description = "Method1 Description" },
+                new ComplexTemplate.MethodsItem { Signature = "Method2", Description = "Method2 Description" }
             }
         };
         

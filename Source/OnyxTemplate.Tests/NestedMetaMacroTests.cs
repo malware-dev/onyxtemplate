@@ -16,9 +16,9 @@ public class NestedMetaMacroTests
         var template = new NestedMetaMacroTemplate();
         template.Rows = new[]
         {
-            new NestedMetaMacroTemplate.RowItem { Cells = new[] { "1", "2", "3" } },
-            new NestedMetaMacroTemplate.RowItem { Cells = new[] { "4", "5", "6" } },
-            new NestedMetaMacroTemplate.RowItem { Cells = new[] { "7", "8", "9" } }
+            new NestedMetaMacroTemplate.RowsItem { Cells = new[] { "1", "2", "3" } },
+            new NestedMetaMacroTemplate.RowsItem { Cells = new[] { "4", "5", "6" } },
+            new NestedMetaMacroTemplate.RowsItem { Cells = new[] { "7", "8", "9" } }
         };
 
         var result = template.ToString();

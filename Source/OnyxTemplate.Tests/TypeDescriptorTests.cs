@@ -114,7 +114,7 @@ public class TypeDescriptorTests
         
         var complexType = typeDescriptor.Fields[0].ComplexType;
         complexType.Should().NotBeNull();
-        complexType.Name.Should().Be(new Identifier("ProductItem"));
+        complexType.Name.Should().Be(new Identifier("ProductsItem"));
         complexType.Fields.Length.Should().Be(3);
         complexType.Fields[0].Name.Should().Be(new Identifier("DiscountPrice"));
         complexType.Fields[0].Type.Should().Be(TemplateFieldType.String);

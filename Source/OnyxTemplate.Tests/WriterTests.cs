@@ -181,8 +181,8 @@ public class WriterTests
         const string expected =
             Prefix +
             """
-                    IReadOnlyList<ItemItem> _items;
-                    public virtual IReadOnlyList<ItemItem> Items { get { return _items ?? Array.Empty<ItemItem>(); } set { _items = value; } }
+                    IReadOnlyList<ItemsItem> _items;
+                    public virtual IReadOnlyList<ItemsItem> Items { get { return _items ?? Array.Empty<ItemsItem>(); } set { _items = value; } }
 
                     public override string ToString()
                     {
@@ -204,14 +204,14 @@ public class WriterTests
                         return writer.ToString();
                     }
 
-                    public class ItemItem
+                    public class ItemsItem
                     {
                         public virtual string Item { get; set; }
-                        IReadOnlyList<SubItemItem> _subItems;
-                        public virtual IReadOnlyList<SubItemItem> SubItems { get { return _subItems ?? Array.Empty<SubItemItem>(); } set { _subItems = value; } }
+                        IReadOnlyList<SubItemsItem> _subItems;
+                        public virtual IReadOnlyList<SubItemsItem> SubItems { get { return _subItems ?? Array.Empty<SubItemsItem>(); } set { _subItems = value; } }
                     }
 
-                    public class SubItemItem
+                    public class SubItemsItem
                     {
                         public virtual string FirstName { get; set; }
                         public virtual string LastName { get; set; }
