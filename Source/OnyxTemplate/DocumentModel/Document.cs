@@ -123,7 +123,7 @@ namespace Mal.OnyxTemplate.DocumentModel
                         if (n <= 1)
                             return;
 
-                        var complexTypeName = Identifier.MakeSafe(loop.Variable + "Item");
+                        var complexTypeName = Identifier.MakeSafe(loop.Collection.Name + "Item");
                         var complexType = new TemplateTypeDescriptor.Builder(descriptor)
                             .WithName(complexTypeName);
                         ScanThisScope(complexType, loop.Blocks);

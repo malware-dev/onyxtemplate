@@ -1,4 +1,8 @@
-﻿v.1.3.1-alpha
+﻿v.1.3.2-alpha
+ - Forgot to replace .Any() with .Count > 0 when changing from IEnumerable to IReadOnlyList
+ - Collection item names used the variable name instead of the collection name, breaking backwards compatibility.
+
+v.1.3.1-alpha
  - I stupidly had implicit usings in my test project, which meant that code that shouldn't have compiled, compiled. Fixed that.
 
 v.1.3.0-alpha

@@ -150,7 +150,7 @@ namespace Mal.OnyxTemplate
                                     fieldReference = $"{fieldReference} != null";
                                     break;
                                 case TemplateFieldType.Collection:
-                                    fieldReference = $"({fieldReference} != null && {fieldReference}.Any())";
+                                    fieldReference = $"({fieldReference} != null && {fieldReference}.Count > 0)";
                                     break;
                                 default:
                                     throw new ArgumentOutOfRangeException();
