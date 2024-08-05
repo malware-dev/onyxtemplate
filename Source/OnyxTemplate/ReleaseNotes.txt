@@ -1,4 +1,7 @@
-﻿v.1.3.4-alpha
+﻿v.1.3.5-alpha
+ - Fixed generator assembly references being forwarded
+
+v.1.3.4-alpha
  - More than one foreach on the same collection, using complex content, resulted in duplicate generation of the collection item type, which again resulted in fields not being found.
 
 v.1.3.3-alpha

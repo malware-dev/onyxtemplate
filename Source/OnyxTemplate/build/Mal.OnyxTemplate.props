@@ -1,6 +1,9 @@
-<Project>
+ <Project>
     <ItemGroup>
         <None Remove="**\*.onyx" />
         <AdditionalFiles Include="**\*.onyx" />
     </ItemGroup>
-</Project>
+     <ItemGroup>
+         <PackageReference Update="Mal.OnyxTemplate" IncludeAssets="analyzers" />
+     </ItemGroup>
+ </Project>
