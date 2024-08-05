@@ -15,6 +15,22 @@ namespace Mal.OnyxTemplate.DocumentModel
     public class Document
     {
 
+        /// <summary>
+        ///     Parses a document from a string.
+        /// </summary>
+        /// <param name="source"></param>
+        /// <returns></returns>
+        /// <exception cref="DomException"></exception>
+        public static Document Parse(string source)
+        {
+            var blocks = ImmutableArray.CreateBuilder<DocumentBlock>();
+            var ptr = new TextPtr(source);
+            TryReadHeader(ref ptr, out var header);
+            if (ReadBlocks(ref ptr, blocks) != null)
+                throw new DomException(ptr, 1, "Unexpected token.");
+            return new Document(header, blocks.ToImmutable());
+        }
+
         TemplateTypeDescriptor _typeDescriptor;
 
         Document(DocumentHeader header, ImmutableArray<DocumentBlock> blocks)
@@ -124,10 +140,15 @@ namespace Mal.OnyxTemplate.DocumentModel
                             return;
 
                         var complexTypeName = Identifier.MakeSafe(loop.Collection.Name + "Item");
-                        var complexType = new TemplateTypeDescriptor.Builder(descriptor)
-                            .WithName(complexTypeName);
+                        var complexType = builder.FindComplexType(complexTypeName);
+                        if (complexType == null)
+                        {
+                            complexType = new TemplateTypeDescriptor.Builder(descriptor)
+                                .WithName(complexTypeName);
+                            builder.WithComplexType(complexType);
+                        }
+
                         ScanThisScope(complexType, loop.Blocks);
-                        builder.WithComplexType(complexType);
                         p.WithType(complexTypeName);
                     });
             }
@@ -222,22 +243,6 @@ namespace Mal.OnyxTemplate.DocumentModel
                 default:
                     return 0;
             }
-        }
-
-        /// <summary>
-        ///     Parses a document from a string.
-        /// </summary>
-        /// <param name="source"></param>
-        /// <returns></returns>
-        /// <exception cref="DomException"></exception>
-        public static Document Parse(string source)
-        {
-            var blocks = ImmutableArray.CreateBuilder<DocumentBlock>();
-            var ptr = new TextPtr(source);
-            TryReadHeader(ref ptr, out var header);
-            if (ReadBlocks(ref ptr, blocks) != null)
-                throw new DomException(ptr, 1, "Unexpected token.");
-            return new Document(header, blocks.ToImmutable());
         }
 
         static IntermediateMacro ReadBlocks(ref TextPtr ptr, ImmutableArray<DocumentBlock>.Builder blocks)

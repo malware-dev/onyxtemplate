@@ -1,5 +1,46 @@
-﻿{{ $foreach row in Rows }}
-{{ $foreach cell in cells }}
-{{ $if .$first }}**{{ $else }}  {{ $end }}{{ $if $first }}|{{ $end }}{{ cell }}{{ $if $last }}|{{ $end }}{{ $if .$last }}**{{ $else }}  {{ $end }}
+﻿using Microsoft.Maui.Controls;
+using Microsoft.Maui.Graphics;
+using System;
+using System.Diagnostics;
+using System.Collections.Immutable;
+using Go.Themes;
+
+namespace {{ namespace }};
+
+/// <summary>
+/// A collection of resources divided by Dark and Light themes. 
+/// </summary>
+public partial class DesignSystem
+{
+    /// <summary>
+    /// A list of themed <see cref="Color"/>s 
+    /// </summary>
+    public static readonly ImmutableDictionary<string, ThemedItem<Color?>> Colors;
+    
+    /// <summary>
+    /// A list of themed <see cref="Brush"/>es
+    /// </summary>
+    public static readonly ImmutableDictionary<string, ThemedItem<Brush?>> Brushes;
+
+    static DesignSystem()
+    {
+        Colors = ImmutableDictionary.Create<string, ThemedItem<Color?>>(StringComparer.Ordinal)
+{{ $foreach color in colors }}
+{{ $if hasWarning }}
+            #warning {{ warning }}
+{{ $end }}
+            .Add("{{ key }}", new ThemedItem<Color?>(new Color({{ darkR }}, {{ darkG }}, {{ darkB }}, {{ darkA }}), new Color({{ lightR }}, {{ lightG }}, {{ lightB }}, {{ lightA }}))){{ $if $last }};{{ $end }} // #{{ darkA }}{{ darkR }}{{ darkG }}{{ darkB }} #{{ lightA }}{{ lightR }}{{ lightG }}{{ lightB }} 
 {{ $next }}
+        Brushes = ImmutableDictionary.Create<string, ThemedItem<Brush?>>(StringComparer.Ordinal)
+{{ $foreach color in colors }}
+            .Add("{{ key }}", new ThemedItem<Brush?>(new SolidColorBrush(new Color({{ darkR }}, {{ darkG }}, {{ darkB }}, {{ darkA }})), new SolidColorBrush(new Color({{ lightR }}, {{ lightG }}, {{ lightB }}, {{ lightA }})))){{ $if $last }};{{ $end }} // #{{ darkA }}{{ darkR }}{{ darkG }}{{ darkB }} #{{ lightA }}{{ lightR }}{{ lightG }}{{ lightB }} 
 {{ $next }}
+
+{{ $if hasBadKeys }}
+        Debug.WriteLine("Problematic DesignSystem resource keys:");
+{{ $end }}
+{{ $foreach key in badKeys }}
+        Debug.WriteLine(" - {{ name }}: {{ reason }}");
+{{ $next }} 
+    }
+}

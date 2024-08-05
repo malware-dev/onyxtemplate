@@ -149,6 +149,16 @@ namespace Mal.OnyxTemplate.DocumentModel
                 return this;
             }
 
+            /// <summary>
+            ///     Attempts to find a complex type by name.
+            /// </summary>
+            /// <param name="complexTypeName"></param>
+            /// <returns></returns>
+            public Builder FindComplexType(Identifier complexTypeName)
+            {
+                return _complexTypes.FirstOrDefault(c => c.Name == complexTypeName);
+            }
+
             class TypeResolver : ITypeResolver
             {
                 public Dictionary<Identifier, TemplateTypeDescriptor> Types { get; } = new Dictionary<Identifier, TemplateTypeDescriptor>(Identifier.IgnoreCaseComparer);
