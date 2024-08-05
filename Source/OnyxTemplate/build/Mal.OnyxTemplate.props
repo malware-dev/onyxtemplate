@@ -4,6 +4,6 @@
         <AdditionalFiles Include="**\*.onyx" />
     </ItemGroup>
      <ItemGroup>
-         <PackageReference Update="Mal.OnyxTemplate" IncludeAssets="analyzers" />
+         <PackageReference Update="Mal.OnyxTemplate" IncludeAssets="analyzers" PrivateAssets="all" />
      </ItemGroup>
  </Project>
